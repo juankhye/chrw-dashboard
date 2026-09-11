@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C.H. Robinson (CHRW) — First Principles Research Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#0b0e14;--bg2:#10141c;--card:#151a24;--card2:#1b2130;--line:#232b3a;--line2:#2e384b;
+  --text:#e8ecf3;--muted:#9aa5b8;--dim:#6b7688;
+  --blue:#3987e5;--orange:#d95926;--aqua:#199e70;--yellow:#c98500;--magenta:#d55181;--green:#008300;--violet:#9085e9;--red:#e66767;
+  --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;
+  --accent:#3987e5;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:74px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+nav.top{position:sticky;top:0;z-index:1000;background:rgba(11,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+nav.top .inner{max-width:1320px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:18px;height:60px}
+nav.top .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;display:flex;align-items:center;gap:10px}
+nav.top .brand .tick{font-family:"JetBrains Mono",monospace;background:var(--blue);color:#fff;padding:2px 8px;border-radius:6px;font-size:12px}
+nav.top .links{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+nav.top .links::-webkit-scrollbar{display:none}
+nav.top .links a{color:var(--muted);font-size:13px;font-weight:500;padding:8px 10px;border-radius:8px;white-space:nowrap}
+nav.top .links a:hover,nav.top .links a.active{color:var(--text);background:var(--card2);text-decoration:none}
+.progress{position:fixed;top:0;left:0;height:2px;background:var(--blue);width:0;z-index:1001;transition:width .1s linear}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+section.sec{padding:72px 0 24px;border-bottom:1px solid var(--line)}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px;flex-wrap:wrap}
+.sec-head h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.5px}
+.sec-head .kicker{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:8px;display:block}
+.sec-head p.lede{margin:10px 0 0;color:var(--muted);max-width:860px;font-size:16px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g23{grid-template-columns:2fr 3fr}
+.g32{grid-template-columns:3fr 2fr}
+@media(max-width:1180px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:980px){.g2,.g3,.g4,.g23,.g32{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.card h3{margin:0 0 10px;font-size:17px;font-weight:700}
+.card h4{margin:14px 0 6px;font-size:14px;font-weight:700;color:var(--text)}
+.card p{margin:8px 0;color:var(--muted)}
+.card p strong,.card li strong{color:var(--text)}
+.card ul,.card ol{margin:8px 0;padding-left:18px;color:var(--muted)}
+.card li{margin:5px 0}
+.card.accent{border-color:rgba(57,135,229,.45);background:linear-gradient(180deg,rgba(57,135,229,.08),var(--card))}
+.src{display:inline-block;font-size:11px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);padding:1px 7px;border-radius:5px;margin-left:4px;vertical-align:middle;font-weight:500;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--card2);color:var(--muted);border:1px solid var(--line2)}
+.tag.blue{color:#8dbcf5;border-color:rgba(57,135,229,.4)}.tag.green{color:#5fd49f;border-color:rgba(25,158,112,.4)}.tag.red{color:#f09a9a;border-color:rgba(230,103,103,.4)}.tag.orange{color:#f6a27f;border-color:rgba(217,89,38,.4)}.tag.violet{color:#b8b0f5;border-color:rgba(144,133,233,.4)}
+.hero{padding:70px 0 40px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(900px 400px at 15% 0%,rgba(57,135,229,.18),transparent 60%),radial-gradient(700px 400px at 90% 20%,rgba(144,133,233,.12),transparent 60%);pointer-events:none}
+.hero h1{font-size:46px;line-height:1.08;margin:14px 0 14px;letter-spacing:-1.2px;font-weight:800}
+.hero h1 span{color:var(--blue)}
+.hero p.sub{font-size:18px;color:var(--muted);max-width:840px;margin:0 0 26px}
+.hero .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px}
+.kpi .v{font-size:28px;font-weight:800;letter-spacing:-.8px;font-family:"JetBrains Mono",monospace}
+.kpi .l{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}
+.kpi .s{font-size:11px;color:var(--dim);margin-top:6px}
+.chart-wrap{position:relative;height:320px;margin-top:8px}
+.chart-wrap.tall{height:400px}
+.chart-wrap.short{height:240px}
+.chart-note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th,.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td:first-child,.tbl th:first-child{text-align:left}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl .num{font-family:"JetBrains Mono",monospace;font-size:13px}
+.tbl-scroll{overflow-x:auto}
+.pos{color:#5fd49f}.neg{color:#f09a9a}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.btn{background:var(--card2);border:1px solid var(--line2);color:var(--muted);padding:7px 13px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;font-family:inherit}
+.btn:hover{color:var(--text);border-color:var(--blue)}
+.btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.slider{margin:12px 0}
+.slider label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px}
+.slider label b{color:var(--text);font-family:"JetBrains Mono",monospace}
+.out{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:8px}
+.out .big{font-size:32px;font-weight:800;font-family:"JetBrains Mono",monospace;letter-spacing:-1px}
+.out .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:4px 0;border-bottom:1px dashed var(--line)}
+.out .row:last-child{border-bottom:0}
+.out .row b{color:var(--text);font-family:"JetBrains Mono",monospace}
+.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+.flow .node{flex:1;min-width:150px;background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:14px;text-align:center}
+.flow .node .t{font-weight:700;font-size:14px}
+.flow .node .d{font-size:12px;color:var(--muted);margin-top:4px}
+.flow .node .n{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:800;margin-top:6px}
+.flow .arrow{display:flex;align-items:center;color:var(--dim);font-size:22px}
+.tree{display:grid;gap:10px}
+.tree .lvl{display:grid;gap:10px}
+.tree .box{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:13px}
+.tree .box b{display:block;font-size:14px}
+.tree .box .val{font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:800;margin-top:2px}
+.tree .box .sub{color:var(--muted);font-size:12px}
+.tree .box.root{border-color:var(--blue);background:rgba(57,135,229,.12)}
+.tree .box.neg{border-color:rgba(230,103,103,.5)}
+.tree .box.pos{border-color:rgba(25,158,112,.5)}
+#map,#map2{height:540px;border-radius:12px;border:1px solid var(--line);background:#0b0e14;z-index:1}
+.leaflet-container{background:#0b0e14;font-family:Inter,sans-serif}
+.leaflet-popup-content-wrapper{background:var(--card);color:var(--text);border:1px solid var(--line2);border-radius:10px;font-size:13px}
+.leaflet-popup-tip{background:var(--card)}
+.leaflet-popup-content b{color:#fff}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.timeline{position:relative;padding-left:26px}
+.timeline:before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line2)}
+.timeline .ev{position:relative;margin-bottom:16px}
+.timeline .ev:before{content:"";position:absolute;left:-23px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--bg)}
+.timeline .ev.red:before{background:var(--red)}
+.timeline .ev.green:before{background:var(--aqua)}
+.timeline .ev .d{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--blue)}
+.timeline .ev .t{font-weight:700}
+.timeline .ev .x{color:var(--muted);font-size:13.5px}
+.bb{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.bb{grid-template-columns:1fr}}
+.bb .card.bull{border-color:rgba(25,158,112,.45)}
+.bb .card.bear{border-color:rgba(230,103,103,.45)}
+.riskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.risk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;border-left:4px solid var(--warn)}
+.risk.high{border-left-color:var(--crit)}.risk.med{border-left-color:var(--serious)}.risk.low{border-left-color:var(--good)}
+.risk .h{display:flex;justify-content:space-between;align-items:center;font-weight:700;gap:8px}
+.risk .p{color:var(--muted);font-size:13.5px;margin-top:6px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 18px;margin:8px 0}
+details summary{cursor:pointer;padding:14px 0;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary:after{content:"+";color:var(--muted);font-size:20px}
+details[open] summary:after{content:"–"}
+details .body{padding:0 0 16px;color:var(--muted)}
+details .body strong{color:var(--text)}
+.quote{border-left:3px solid var(--violet);padding:8px 16px;color:var(--muted);font-style:italic;background:var(--bg2);border-radius:0 10px 10px 0;margin:10px 0}
+.quote .who{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:4px}
+.callout{background:linear-gradient(135deg,rgba(57,135,229,.12),rgba(144,133,233,.08));border:1px solid rgba(57,135,229,.35);border-radius:12px;padding:16px 18px;margin:14px 0;color:var(--muted)}
+.callout b{color:#fff}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.split{grid-template-columns:1fr}}
+.bar{height:10px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:6px}
+footer{padding:40px 0 60px;color:var(--dim);font-size:12.5px;line-height:1.7}
+.tv{height:480px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.step{display:flex;gap:14px;margin:12px 0}
+.step .n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:"JetBrains Mono",monospace}
+.step .b{color:var(--muted)}
+.step .b b{color:var(--text)}
+.scoreboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.scoreboard .s{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:12px}
+.scoreboard .s .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.scoreboard .s .v{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:800;margin-top:2px}
+.scoreboard .s .d{font-size:11px;color:var(--dim)}
+.verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:900px){.verdict{grid-template-columns:1fr}}
+.verdict .v{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:14px;text-align:center}
+.verdict .v .n{font-family:"JetBrains Mono",monospace;font-size:26px;font-weight:800}
+.verdict .v .l{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<nav class="top">
+  <div class="inner">
+    <div class="brand"><span class="tick">CHRW</span> C.H. Robinson</div>
+    <div class="links" id="navlinks">
+      <a href="#overview">Overview</a>
+      <a href="#brokerage101">Brokerage 101</a>
+      <a href="#model">Business Model</a>
+      <a href="#segments">Segments</a>
+      <a href="#footprint">Footprint</a>
+      <a href="#drivers">Drivers</a>
+      <a href="#cycle">Rate Cycle</a>
+      <a href="#ai">Lean AI</a>
+      <a href="#moat">Moat</a>
+      <a href="#competition">Competition</a>
+      <a href="#legal">Legal</a>
+      <a href="#trade">Trade</a>
+      <a href="#financials">Financials</a>
+      <a href="#sensitivity">Sensitivity</a>
+      <a href="#valuation">Valuation</a>
+      <a href="#bullbear">Bull vs Bear</a>
+      <a href="#risks">Risks</a>
+      <a href="#watch">What to Watch</a>
+      <a href="#glossary">Glossary</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="overview">
+  <div class="wrap">
+    <div class="meta">
+      <span class="tag blue">NASDAQ: CHRW</span>
+      <span class="tag">Asset-light 3PL / Freight Broker</span>
+      <span class="tag">Eden Prairie, Minnesota</span>
+      <span class="tag">Founded 1905</span>
+      <span class="tag violet">Sources: 10 broker &amp; primer PDFs + 3 broker models, Sep 2026</span>
+    </div>
+    <h1>C.H. Robinson: the <span>middleman</span> that moves 37 million shipments a year without owning a single truck.</h1>
+    <p class="sub">C.H. Robinson is North America's largest freight broker. Shippers (Walmart, an auto plant, a produce grower) need goods moved. Roughly 450,000 small trucking companies have empty trucks. Robinson sits in between, buys the truck's capacity, sells it to the shipper at a markup, and keeps the spread. This dashboard explains that business from first principles: how the spread is earned, why it whipsaws with the freight cycle, how "Lean AI" changed the cost base, why a $604M Texas jury verdict is now the dominant debate, and what the stock is worth under bull and bear cases.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="v" data-count="152.42" data-prefix="$" data-dec="2">$0</div><div class="l">Share price (11 Sep 2026 close)</div><div class="s">52w range $122–$210 · YTD −4.5%</div></div>
+      <div class="kpi"><div class="v" data-count="16.2" data-prefix="$" data-suffix="B" data-dec="1">$0</div><div class="l">FY2025 gross revenue</div><div class="s">What shippers paid Robinson</div></div>
+      <div class="kpi"><div class="v" data-count="2.73" data-prefix="$" data-suffix="B" data-dec="2">$0</div><div class="l">FY2025 adjusted gross profit</div><div class="s">The "spread" Robinson keeps (16.8%)</div></div>
+      <div class="kpi"><div class="v" data-count="834" data-prefix="$" data-suffix="M">$0</div><div class="l">FY2025 adjusted operating income</div><div class="s">Guided $964M–$1.04B for 2026</div></div>
+      <div class="kpi"><div class="v" data-count="5.09" data-prefix="$" data-dec="2">$0</div><div class="l">FY2025 adjusted EPS</div><div class="s">Consensus 2026E ≈ $6.2 · 2027E ≈ $7.5</div></div>
+      <div class="kpi"><div class="v" data-count="11855" data-format="int">0</div><div class="l">Employees, end-2025</div><div class="s">Down from 17,399 in 2022 (−32%)</div></div>
+    </div>
+    <div class="callout" style="margin-top:22px">
+      <b>The one-paragraph thesis map.</b> Bulls (UBS, Jefferies, Evercore, JMP, Deutsche Bank) say Robinson has structurally cut its cost-to-serve by ~60% since 2022 through AI-driven automation, hit its "mid-cycle" margin targets at the bottom of the freight cycle, and will see 100%+ incremental margins as truckload rates recover and contracts reprice, with the new legal regime driving small brokers out and share toward Robinson. Bears (Bernstein, TD Cowen, CFRA) say the May 2026 Supreme Court ruling in <i>Montgomery v. Caribe Transport</i> plus the July 2026 $604M <i>Lipe</i> verdict permanently reprice broker liability: insurance and claims costs could double or worse, small-carrier buy rates inflate, and asset-owning truckers that self-insure win share from asset-light brokers. Price targets span $91 (Morgan Stanley, Underweight since 2013) to $237 (Evercore) against a $152 share price; the consensus mean is about $200.
+    </div>
+  </div>
+</section>
+
+<!-- ============ BROKERAGE 101 ============ -->
+<section class="sec" id="brokerage101">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">First principles</span><h2>Freight brokerage 101: how a middleman makes money moving trucks</h2>
+    <p class="lede">Assume you know nothing about logistics. Here is the whole industry in five ideas.</p></div></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>1. The U.S. trucking market is enormous and hopelessly fragmented</h3>
+        <p>About 70% of U.S. freight by weight moves by truck. The supply side is hundreds of thousands of tiny carriers: Robinson's own network has <strong>~450,000 contract carriers</strong>, and roughly <strong>72% of its truckload shipments are hauled by carriers with fewer than 100 trucks</strong> <span class="src">Bernstein via AlphaSense primer</span>. A shipper with 5,000 loads a week cannot phone 450,000 owner-operators. A one-truck owner-operator cannot find Walmart. Someone has to match them.</p>
+        <h4>Two kinds of freight</h4>
+        <ul>
+          <li><strong>Truckload (TL):</strong> one shipper fills a whole 53-foot trailer. Priced per mile. Robinson's biggest product (~46% of adjusted gross profit) <span class="src">UBS</span>.</li>
+          <li><strong>Less-than-truckload (LTL):</strong> several shippers' pallets share a trailer, moved through a hub-and-spoke terminal network owned by carriers like Old Dominion or XPO. Robinson resells LTL capacity and handles the classification paperwork (~20% of AGP).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>2. The broker buys capacity wholesale and sells it retail</h3>
+        <p>Robinson never owns the truck. For each load it quotes the shipper a <strong>sell rate</strong> and then finds a carrier willing to move it for a <strong>buy rate</strong>. The difference is called <strong>net revenue</strong> or <strong>adjusted gross profit (AGP)</strong>.</p>
+        <div class="flow" style="margin-top:14px">
+          <div class="node"><div class="t">Shipper pays</div><div class="d">Sell rate (gross revenue)</div><div class="n">$2,600</div></div>
+          <div class="arrow">→</div>
+          <div class="node" style="border-color:var(--blue)"><div class="t">Robinson keeps</div><div class="d">AGP / net revenue ≈ 13–17%</div><div class="n" style="color:#8dbcf5">$390</div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="t">Carrier receives</div><div class="d">Buy rate (purchased transportation)</div><div class="n">$2,210</div></div>
+        </div>
+        <p style="margin-top:12px"><strong>Why "gross revenue" is misleading:</strong> the $16.2B headline includes the $13.5B Robinson simply passes through to carriers. Analysts value the company on the <strong>$2.7B of AGP</strong> and on operating income as a percentage of AGP (Robinson calls this "adjusted operating margin"). When you see "NAST margin 40.9%", that is operating income ÷ AGP, not ÷ gross revenue.</p>
+      </div>
+      <div class="card">
+        <h3>3. Contract vs spot: two ways to price a load</h3>
+        <ul>
+          <li><strong>Contract (~70% of Robinson's truckload volume):</strong> an annual bid where Robinson commits to a fixed sell rate per lane for 12 months <span class="src">UBS, Jefferies</span>. Predictable for the shipper. Dangerous for the broker if carrier costs move.</li>
+          <li><strong>Spot (~30%):</strong> priced load-by-load at today's market rate. Reprices instantly. Landstar is a 100% spot model, which is why it repriced faster than Robinson in 2Q26 <span class="src">Jefferies</span>.</li>
+        </ul>
+        <p>The <strong>DAT dry van spot rate</strong> (a benchmark from load-board operator DAT) is the market's real-time price of a truck. In August 2026 the dry van spot linehaul rate was ~$2.25 to $2.32 per mile ex-fuel and the contract rate ~$2.42 <span class="src">DAT, Aug 2026</span>. In mid-2025 spot was ~$1.80.</p>
+      </div>
+      <div class="card">
+        <h3>4. The spread squeeze: why a freight recovery hurts before it helps</h3>
+        <p>This is the single most important mechanic in the stock.</p>
+        <div class="step"><div class="n">1</div><div class="b"><b>Trucks get scarce</b> (drivers exit, small carriers go bankrupt, regulation removes capacity). Spot buy rates jump. In 2Q26 dry van spot was up 34% year over year <span class="src">Deutsche Bank</span>.</div></div>
+        <div class="step"><div class="n">2</div><div class="b"><b>Robinson's buy cost rises immediately</b> because it must pay today's rate to find a truck. Its truckload cost per mile rose <b>29%</b> in 2Q26.</div></div>
+        <div class="step"><div class="n">3</div><div class="b"><b>But 70% of its sell rates are locked in contracts.</b> Price per mile rose only <b>25.5%</b>. The gap compressed NAST gross margin by 170bp to 13.1% <span class="src">UBS, Press release</span>.</div></div>
+        <div class="step"><div class="n">4</div><div class="b"><b>Two to three quarters later</b> contracts reprice at the higher market, buy rates plateau, and the spread widens again. UBS: net revenue per load lags spot rates by 2–3 quarters, so 2Q26's spot surge should show up in 4Q26 and 2027 AGP.</div></div>
+        <p>The mirror image is true in a downturn: when rates collapse (2023), contract sell rates stay high for a while and the spread fattens even as volume falls. That is why Robinson's net revenue margin moves <em>inversely</em> to spot rates in the short run.</p>
+      </div>
+    </div>
+
+    <div class="grid g32" style="margin-top:18px">
+      <div class="card">
+        <h3>5. Interactive: the spread squeeze and recovery</h3>
+        <p>Drag the spot-rate shock. The chart shows how buy cost jumps immediately while the contract sell rate catches up over three quarters, and what happens to gross margin per load. Illustrative mechanics calibrated to 2Q26 (price +25.5%, cost +29%, margin 13.1%).</p>
+        <div class="slider"><label>Spot buy-rate shock (year-over-year) <b id="sqv">+29%</b></label><input type="range" id="sq" min="-30" max="50" value="29"></div>
+        <div class="chart-wrap short"><canvas id="chSqueeze"></canvas></div>
+        <div class="chart-note">Quarter 0 = pre-shock steady state at 14.8% gross margin (Robinson's FY2025 NAST level). Contract sell rate assumed to reprice 30% per quarter toward market as annual bids roll. Gross margin % is (sell − buy) ÷ sell.</div>
+      </div>
+      <div class="card accent">
+        <h3>Why this matters for the numbers you will see</h3>
+        <ul>
+          <li><strong>Gross revenue</strong> tracks spot rates almost one-for-one (UBS: "coincident relationship"). A 23% NAST revenue jump in 2Q26 was mostly price, not volume (+1.5%).</li>
+          <li><strong>AGP</strong> is what pays the bills. It grew only 8.6% in NAST despite revenue +23%.</li>
+          <li><strong>Operating income</strong> is AGP minus people (~$1.3B) minus SG&amp;A (~$560M). Because Robinson slashed people costs, a given AGP now converts to far more profit than in 2018 or 2022.</li>
+          <li><strong>Volume × AGP per shipment × (1 − cost-to-serve ratio)</strong> is the whole model. Section "Drivers" builds this tree with real 2025 numbers.</li>
+        </ul>
+        <h4>Glossary quick-hits</h4>
+        <p><strong>3PL</strong> = third-party logistics provider (an outsourcer that arranges transport). <strong>NAST</strong> = North American Surface Transportation, Robinson's trucking segment. <strong>Global Forwarding</strong> = ocean and air freight, plus customs clearance. <strong>Cass Freight Index</strong> = a monthly gauge of U.S. shipment volumes from freight-bill payer Cass. Full glossary at the bottom.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ BUSINESS MODEL ============ -->
+<section class="sec" id="model">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Business model</span><h2>What Robinson actually sells, and to whom</h2>
+    <p class="lede">A 121-year-old produce broker that became a $16B logistics platform. Asset-light means ~85% of operating expenses are variable purchased transportation, which is why it has never posted an operating loss through a freight downturn <span class="src">CFRA via primer</span>.</p></div></div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3>Customers: ~75,000 shippers</h3>
+        <p>Manufacturers, retailers, food companies, auto plants, energy firms. The largest customer is only ~2% of revenue <span class="src">10-K FY2025</span>. Management is prioritising "key verticals": automotive, retail, healthcare, energy and tech, where cross-border, drop-trailer and seasonal-surge complexity favours a scaled broker <span class="src">Investor Day, Deutsche Bank</span>.</p>
+        <h4>How they buy</h4>
+        <ul>
+          <li><strong>Annual RFP / contract bids</strong> for repeatable lanes (70% of TL volume).</li>
+          <li><strong>Spot quotes</strong> for surge or one-off freight, increasingly via API and AI agents that answer in under 32 seconds.</li>
+          <li><strong>Managed transportation (TMC)</strong>: Robinson runs the shipper's whole transport function as a carrier-agnostic 4PL, then feeds volume into its own brokerage.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Suppliers: ~450,000 contract carriers</h3>
+        <p>Mostly small fleets and owner-operators. Robinson is their sales force: it finds them loads, pays them fast (often with cash advances), and gives them a mobile app (Navisphere Carrier / Driver) to book freight and upload paperwork. For a one-truck operator, Robinson's load board is a primary way to find backhauls <span class="src">Expert call via primer</span>.</p>
+        <h4>The vetting problem</h4>
+        <p>Robinson must check each carrier's authority, insurance and FMCSA safety rating. After <i>Montgomery</i> (May 2026), how well it vets carriers is now a litigable question in state courts, which is the crux of the legal section.</p>
+      </div>
+      <div class="card">
+        <h3>The platform: Navisphere</h3>
+        <p>An internally built, multi-modal transportation management system launched in 2012 and funded by a 2018 pledge to spend <strong>$1B over five years</strong> on technology <span class="src">StoneX via primer</span>. It is the system of record for shippers (Navisphere Vision: tracking, cost per mile analytics), carriers (Navisphere Carrier) and drivers (Navisphere Driver: geofenced status updates, proof of delivery).</p>
+        <p>Because the data is proprietary, Robinson trains pricing and routing algorithms on <strong>37 million shipments a year</strong> of transaction history, which sub-scale competitors cannot replicate <span class="src">TD Cowen, Jefferies</span>.</p>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <h3>The P&amp;L in plain English (FY2025)</h3>
+        <div class="tbl-scroll"><table class="tbl">
+          <tr><th>Line</th><th>$M</th><th>What it means</th></tr>
+          <tr><td>Gross revenue</td><td class="num">16,233</td><td style="text-align:left;color:var(--muted)">Everything shippers paid</td></tr>
+          <tr><td>− Purchased transportation</td><td class="num">(13,504)</td><td style="text-align:left;color:var(--muted)">Paid out to carriers, ocean lines, airlines</td></tr>
+          <tr><td><strong>= Adjusted gross profit (AGP)</strong></td><td class="num"><strong>2,729</strong></td><td style="text-align:left;color:var(--muted)">The spread. 16.8% of gross revenue</td></tr>
+          <tr><td>− Personnel expense</td><td class="num">≈(1,300)</td><td style="text-align:left;color:var(--muted)">11,855 employees. Biggest controllable cost</td></tr>
+          <tr><td>− SG&amp;A (ex D&amp;A)</td><td class="num">≈(500)</td><td style="text-align:left;color:var(--muted)">Offices, tech, insurance &amp; claims (~$60M), other</td></tr>
+          <tr><td>− D&amp;A</td><td class="num">(103)</td><td style="text-align:left;color:var(--muted)">Mostly capitalised software</td></tr>
+          <tr><td><strong>= Adjusted operating income</strong></td><td class="num"><strong>834</strong></td><td style="text-align:left;color:var(--muted)">30.6% of AGP; 5.1% of gross revenue</td></tr>
+          <tr><td>− Interest, tax (18.8%)</td><td class="num">(216)</td><td style="text-align:left;color:var(--muted)">Net debt ~$1.2B</td></tr>
+          <tr><td><strong>= Net income / EPS</strong></td><td class="num"><strong>618 / $5.09</strong></td><td style="text-align:left;color:var(--muted)">121M diluted shares</td></tr>
+        </table></div>
+        <div class="chart-note">Sources: UBS model (30 Jul 2026) for revenue, GP, EBIT, tax, EPS; personnel and SG&amp;A approximated from 2026 guidance ranges ($1.25–1.35B personnel, $540–580M SG&amp;A) and Bernstein's sub-1%-of-revenue insurance estimate. GAAP operating income was $795M after restructuring charges.</div>
+      </div>
+      <div class="card">
+        <h3>Where the spread comes from: AGP by service, FY2025</h3>
+        <div class="chart-wrap"><canvas id="chAgpMix"></canvas></div>
+        <div class="chart-note">Source: 10-K FY2025 adjusted gross profit by transportation mode (transportation = 95% of AGP; the remaining ~$140M is Robinson Fresh produce sourcing and other). Truckload $1,052M · LTL $610M · Ocean $433M · Air $137M · Customs $133M · Other logistics $224M.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Strategy under CEO Dave Bozeman (since June 2023): "One Robinson" + "Lean AI"</h3>
+      <div class="grid g3">
+        <div><h4>Centralise</h4><p>Robinson historically ran as a federation of branch offices, each with its own customer relationships and pricing. Bozeman collapsed this into one go-to-market, one pricing engine, and centralised carrier procurement (separate from sales, unlike TQL where the same person does both) <span class="src">UBS, Expert calls</span>.</p></div>
+        <div><h4>Automate the routine</h4><p>Over 30 proprietary generative-AI agents now quote, classify, book, track and handle exceptions: 3M+ tasks done without a human. Quote response fell from 17–20 minutes to under 32 seconds; RFQ response coverage rose from 60% to 100% <span class="src">Mizuho, CFRA</span>. Token cost is only ~$1.0–1.5M a year <span class="src">GS HQ visit, Aug 2026</span>.</p></div>
+        <div><h4>Higher peaks, shallower troughs</h4><p>The "North Star" set at the December 2024 Investor Day: grow 2026 adjusted operating income by $220M vs 2024, raised in October 2025 to $336M, giving the <strong>$964M–$1.04B 2026 range</strong>. The low end is modelled to deliver ~$6.00 EPS even with a −3% market <span class="src">Press release, Deutsche Bank</span>.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SEGMENTS ============ -->
+<section class="sec" id="segments">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Segments</span><h2>Two engines and a tail: NAST, Global Forwarding, All Other</h2>
+    <p class="lede">NAST is the trucking business and ~70% of AGP. Global Forwarding is ocean, air and customs, ~25%. Robinson Fresh (produce) and Managed Solutions (4PL/TMS) make up the rest. Europe Surface Transportation was sold to sennder in February 2025.</p></div></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Adjusted gross profit by segment, 2Q26 (annualised run-rate in brackets)</h3>
+        <div class="chart-wrap"><canvas id="chSegAgp"></canvas></div>
+        <div class="chart-note">Source: 2Q26 press release via primer and UBS. NAST $469.4M, Global Forwarding $188.8M, Robinson Fresh $47.3M, Managed Solutions $32.5M. Total AGP $738M.</div>
+      </div>
+      <div class="card">
+        <h3>Adjusted operating margin by segment (operating income ÷ AGP)</h3>
+        <div class="chart-wrap"><canvas id="chSegMargin"></canvas></div>
+        <div class="chart-note">Mid-cycle targets set at the December 2024 Investor Day were 40% NAST and 30% Global Forwarding. Both were reached in 2Q26 (40.9% and 33.4%) while freight volumes were still falling, which is the core of the bull case <span class="src">Stephens, StoneX</span>. Historical points from GS and Bernstein models; see Financials.</div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card">
+        <span class="tag blue">NAST</span>
+        <h3 style="margin-top:10px">North American Surface Transportation</h3>
+        <p><strong>What:</strong> truckload and LTL brokerage across the U.S., Canada and Mexico. ~$11.6B annual gross revenue, more than 50% larger than #2 TQL and ~3x RXO <span class="src">Deutsche Bank</span>. Roughly 14–15% share of a fragmented U.S. truck brokerage market <span class="src">Jefferies</span>.</p>
+        <p><strong>2Q26:</strong> revenue $3.59B (+23.1%), AGP $469M (+8.6%), gross margin 13.1% (−170bp), adjusted operating income $192M, margin 40.9%. Volume +1.5% (TL +0.5%, LTL +2.0%) vs Cass shipments −3.3%: the <strong>13th straight quarter of outgrowing the market</strong>.</p>
+        <p><strong>Inside the quarter:</strong> truckload AGP per shipment held flat despite a 34% surge in dry van spot rates (Deutsche Bank called this "highly impressive"); LTL AGP +21.7% on +19.5% AGP per order as shippers pushed freight from TL to LTL to dodge rising truckload costs.</p>
+      </div>
+      <div class="card">
+        <span class="tag green">Global Forwarding</span>
+        <h3 style="margin-top:10px">Ocean, air and customs</h3>
+        <p><strong>What:</strong> Robinson does not own ships or planes. It buys container slots and air cargo capacity in bulk from carriers (Maersk, CMA CGM, airlines) and resells them to importers and exporters, then clears customs. Built via the 2012 Phoenix International deal ($635M) and APC Logistics (Australia, 2016).</p>
+        <p><strong>2Q26:</strong> revenue $897M (+12%), AGP $189M (+0.7%), gross margin 21.1% (−250bp), operating income $63M, margin 33.4% (+470bp y/y). Air AGP +23.4% (AGP per ton +33.5%, tons −7.5%) as armed conflicts tightened air capacity; ocean AGP −2.8% on softer rates <span class="src">UBS, Bernstein</span>.</p>
+        <p><strong>Why it matters:</strong> forwarding is where the Lean AI playbook is only in the "first inning" (vs "third inning" in NAST), so bulls see the most productivity runway here <span class="src">Evercore</span>. It is also the segment exposed to tariffs and transpacific volumes.</p>
+      </div>
+      <div class="card">
+        <span class="tag">All Other &amp; Corporate</span>
+        <h3 style="margin-top:10px">Robinson Fresh, Managed Solutions, and what was sold</h3>
+        <p><strong>Robinson Fresh</strong> ($47M AGP in 2Q26) is the 1905 legacy: buying, selling and marketing fresh produce for grocers and foodservice. A new GFSI-certified produce logistics centre opened in South Texas in May 2026 for cross-border volumes.</p>
+        <p><strong>Managed Solutions / TMC</strong> ($32M AGP) sells 4PL managed transportation and Navisphere TMS technology. Low capital, sticky, and a funnel that feeds contract and spot freight into NAST.</p>
+        <p><strong>Europe Surface Transportation</strong> (road brokerage in Europe, once headquartered in Poland via the 2012 Apreo deal) was sold to Berlin-based digital forwarder sennder in February 2025, removing a low-margin, sub-scale business and part of the reason 2025 gross revenue fell 8.4%.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Acquisition history: disciplined tuck-ins, not transformation</h3>
+      <div class="tbl-scroll"><table class="tbl">
+        <tr><th>Target</th><th>Segment</th><th>Closed</th><th>Value ($M)</th><th style="text-align:left">Rationale</th></tr>
+        <tr><td>American Backhaulers</td><td>NAST</td><td>1999</td><td class="num">136</td><td style="text-align:left;color:var(--muted)">Early truck brokerage scale</td></tr>
+        <tr><td>Phoenix International</td><td>Global Forwarding</td><td>Nov 2012</td><td class="num">635</td><td style="text-align:left;color:var(--muted)">Doubled ocean forwarding; foundation of GF</td></tr>
+        <tr><td>Freightquote.com</td><td>NAST (LTL)</td><td>Jan 2015</td><td class="num">365</td><td style="text-align:left;color:var(--muted)">Digital LTL matching, SMB shippers</td></tr>
+        <tr><td>APC Logistics</td><td>Global Forwarding</td><td>Sep 2016</td><td class="num">225</td><td style="text-align:left;color:var(--muted)">Oceania region</td></tr>
+        <tr><td>Milgram &amp; Co.</td><td>Global Forwarding</td><td>Aug 2017</td><td class="num">50</td><td style="text-align:left;color:var(--muted)">Canadian customs brokerage</td></tr>
+        <tr><td>Prime Distribution Services</td><td>NAST</td><td>Mar 2020</td><td class="num">223</td><td style="text-align:left;color:var(--muted)">Retail consolidation, warehousing</td></tr>
+        <tr><td>DeSpir Logistics</td><td>NAST</td><td>Jun 2026</td><td class="num">75</td><td style="text-align:left;color:var(--muted)">Secure, high-value cargo (pharma, data-centre gear)</td></tr>
+        <tr><td style="color:var(--red)">Europe Surface Transportation (sold)</td><td>—</td><td>Feb 2025</td><td class="num">n/d</td><td style="text-align:left;color:var(--muted)">Divested to sennder; exit sub-scale European road</td></tr>
+      </table></div>
+      <div class="chart-note">Sources: AlphaSense primer (10-K, press releases), Wikipedia. Deutsche Bank estimates $850M–$2B of M&amp;A firepower within target leverage; 40% of the truck brokerage market is sub-$1B brokers, the natural consolidation pool.</div>
+    </div>
+  </div>
+</section>
+<!-- ============ FOOTPRINT ============ -->
+<section class="sec" id="footprint">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Footprint</span><h2>Where Robinson operates: ~180 offices, 36 countries, one very big U.S. truck network</h2>
+    <p class="lede">Robinson's physical footprint is small for a $16B company because it owns almost nothing. Its people sit in leased offices; the trucks, ships and planes belong to others. The map shows employees by region (10-K FY2025), key hubs, and the trade corridors that drive Global Forwarding.</p></div></div>
+
+    <div class="grid g32">
+      <div class="card">
+        <div class="ctrl">
+          <button class="btn active" data-layer="all">All layers</button>
+          <button class="btn" data-layer="hubs">Offices &amp; hubs</button>
+          <button class="btn" data-layer="lanes">Trade lanes (Global Forwarding)</button>
+          <button class="btn" data-layer="region">Employees by region</button>
+        </div>
+        <div id="map"></div>
+        <div class="legend">
+          <span><i style="background:#3987e5"></i>NAST hub / HQ / cross-border</span>
+          <span><i style="background:#199e70"></i>Global Forwarding gateway</span>
+          <span><i style="background:#9085e9"></i>Tech / shared-services centre</span>
+          <span><i style="background:#d95926"></i>Divested (Europe Surface, Feb 2025)</span>
+          <span><i style="background:rgba(57,135,229,.35);border:1px solid #3987e5"></i>Employee bubbles (size = headcount)</span>
+        </div>
+        <div class="chart-note">Hubs are drawn from the 10-K FY2025 subsidiary list (40 jurisdictions), company press releases (Laredo cross-border facility, South Texas produce centre, Cork technology centre), and the primer. Exact office addresses beyond the HQ are indicative city-level markers. Employee bubbles use 10-K regional headcount at 31 Dec 2025.</div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Employees by region, end-2025</h3>
+          <div class="chart-wrap short"><canvas id="chRegion"></canvas></div>
+          <div class="chart-note">Source: 10-K FY2025. Total 11,855 (plus 761 contingent workers). 9,899 "network" employees face customers and carriers; 1,956 are shared services. ~26% sit outside North America.</div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>Footprint facts that matter for the thesis</h3>
+          <ul>
+            <li><strong>U.S.-Mexico is the growth corridor.</strong> Robinson runs one of the largest cross-border facilities in Laredo, Texas (154 dock doors, room for 700 trailers), handles over 1M cross-border shipments a year across truck, intermodal, ocean and air, and holds ~10% share of the U.S.-Mexico market <span class="src">Press release Sep 2023, StoneX</span>. Monterrey's auto cluster is the anchor customer base.</li>
+            <li><strong>Drop-trailer pool above 10,000 units</strong> is the one place Robinson does own equipment: trailers left at shipper docks so carriers can "drop and hook" <span class="src">StoneX</span>.</li>
+            <li><strong>Global Forwarding is Asia-centric.</strong> Gateways in Shanghai, Hong Kong, Singapore, plus Mumbai, Ho Chi Minh City, Bangkok, Kuala Lumpur, Manila, Seoul, Taipei and Jakarta feed transpacific and Asia-Europe ocean and air lanes; Amsterdam is the European gateway; Sydney/Melbourne came with APC Logistics (2016).</li>
+            <li><strong>Cork, Ireland</strong> hosts a technology centre; Ireland also houses the group's financing entities.</li>
+            <li><strong>Europe road brokerage is gone.</strong> The Poland-centred Europe Surface Transportation business (ex-Apreo) was sold to sennder in February 2025. What remains in Europe is forwarding and customs.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ DRIVERS ============ -->
+<section class="sec" id="drivers">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Revenue &amp; cost drivers</span><h2>The driver tree: volume × spread per shipment × cost-to-serve</h2>
+    <p class="lede">Everything in Robinson's P&amp;L collapses to three variables. Volume (shipments) is mostly the freight cycle plus share gains. Spread per shipment (AGP per load) is pricing discipline versus the spot/contract squeeze. Cost-to-serve is people and technology, which is where Lean AI changed the equation. FY2025 actuals from the Jefferies and UBS models.</p></div></div>
+
+    <div class="grid g32">
+      <div class="card">
+        <h3>FY2025 driver tree ($M unless stated)</h3>
+        <div class="tree">
+          <div class="lvl" style="grid-template-columns:1fr"><div class="box root"><b>Adjusted operating income</b><div class="val">$834M</div><div class="sub">30.6% of AGP · 5.1% of gross revenue · $5.09 EPS</div></div></div>
+          <div class="lvl" style="grid-template-columns:1fr 1fr"><div class="box pos"><b>Adjusted gross profit (AGP)</b><div class="val">$2,729M</div><div class="sub">= 37M shipments × ~$74 AGP per shipment (blended)</div></div><div class="box neg"><b>Operating expenses</b><div class="val">$1,896M</div><div class="sub">Personnel $1,340M + SG&amp;A $556M (incl. D&amp;A $103M)</div></div></div>
+          <div class="lvl" style="grid-template-columns:repeat(4,1fr)">
+            <div class="box"><b>NAST AGP</b><div class="val">$1,706M</div><div class="sub">TL $1,052M · LTL $610M · other. Gross margin 14.8%</div></div>
+            <div class="box"><b>Global Forwarding AGP</b><div class="val">$742M</div><div class="sub">Ocean $433M · Air $137M · Customs $133M. GM 24%</div></div>
+            <div class="box"><b>Fresh + Managed AGP</b><div class="val">$276M</div><div class="sub">Produce $161M · TMS/4PL $115M</div></div>
+            <div class="box"><b>Headcount × cost per head</b><div class="val">12,712 × $105k</div><div class="sub">Avg employees 2025 × avg personnel cost. 2022: 17,399 heads</div></div>
+          </div>
+          <div class="lvl" style="grid-template-columns:repeat(3,1fr)">
+            <div class="box"><b>Volume drivers</b><div class="sub">Freight cycle (Cass −3 to −9%) · share gains (13 straight quarters) · verticals (auto, retail, healthcare) · cross-border · LTL mix shift · post-Montgomery flight to quality</div></div>
+            <div class="box"><b>Spread drivers</b><div class="sub">Spot vs contract lag (2–3 qtrs) · 70/30 contract mix · AI pricing &amp; costing tools · LTL buy-rate resets · carrier insurance inflation in buy rates · ocean/air rate volatility</div></div>
+            <div class="box"><b>Cost drivers</b><div class="sub">Shipments per person per day (+60% since 2022) · incentive comp (rises with beats) · insurance &amp; claims (~$60M → $120M?) · tech spend ~$65–75M capex · restructuring ($50–75M program)</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Operating leverage: what a $1 of AGP becomes</h3>
+          <div class="chart-wrap short"><canvas id="chLeverage"></canvas></div>
+          <div class="chart-note">Adjusted operating income as % of AGP (Robinson's "adjusted operating margin"), annual. 2023 was the trough at ~21%; 2Q26 hit 35.7%. Jefferies: 2Q26 AGP +$45M year over year converted into +$43M of operating income, a 96% incremental margin. Sources: Jefferies model (2024–27E), UBS model (2023), primer (2022 ≈ 24.2%→29.1% 2025 per CFRA).</div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>Personnel as % of AGP: the structural change</h3>
+          <div class="chart-wrap short"><canvas id="chPersonnel"></canvas></div>
+          <div class="chart-note">Personnel expense ÷ AGP. Jefferies model: 51.8% (2024), 49.1% (2025), 44.8% (2Q26), 43.9% (2027E). Every point of this ratio is ~$27M of operating income on 2025 AGP. Management guides 2026 personnel to the high end of $1.25–1.35B because incentive comp rises with beats, which bears cite as evidence that part of the leverage is cyclical.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LEAN AI ============ -->
+<section class="sec" id="ai">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Productivity / AI</span><h2>Lean AI: doing 37 million shipments with 5,500 fewer people</h2>
+    <p class="lede">The most important thing that happened to Robinson between 2022 and 2026 was not the freight cycle. It was that the company cut headcount by a third while growing volume faster than the market, by automating the quote-to-cash workflow with in-house AI agents. Whether this is a permanent, structural change or a cyclical cost cut that gets rehired in an upturn is the central fundamental debate.</p></div></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Headcount vs volume: the decoupling</h3>
+        <div class="chart-wrap"><canvas id="chHeadcount"></canvas></div>
+        <div class="chart-note">Year-end employees: 17,399 (2022) → 11,855 (2025) per primer/10-K. Average headcount per Jefferies model: 14,355 (2024), 12,712 (2025), 11,471 (2Q26), 11,038 (2027E). Shipments held at ~37M a year. Shipments per person per day up over 60% since end-2022 in both NAST and GF (management, 2Q26). Management targets single-digit productivity gains "in perpetuity", double digits in 2026 as GF catches up <span class="src">GS HQ visit</span>.</div>
+      </div>
+      <div class="card">
+        <h3>What the agents actually do</h3>
+        <div class="scoreboard">
+          <div class="s"><div class="k">AI agents deployed</div><div class="v">30+</div><div class="d">Proprietary, generative</div></div>
+          <div class="s"><div class="k">Tasks done autonomously</div><div class="v">3M+</div><div class="d">Pricing, booking, tracking</div></div>
+          <div class="s"><div class="k">Quote response</div><div class="v">&lt;32s</div><div class="d">Was 17–20 minutes</div></div>
+          <div class="s"><div class="k">RFQs answered</div><div class="v">100%</div><div class="d">Was 60% when human-led</div></div>
+          <div class="s"><div class="k">LTL orders classified/day</div><div class="v">~2,000</div><div class="d">NMFC classification agent</div></div>
+          <div class="s"><div class="k">Annual token cost</div><div class="v">$1–1.5M</div><div class="d">Per management to GS</div></div>
+          <div class="s"><div class="k">Productivity since 2022</div><div class="v">+60%</div><div class="d">Shipments/person/day</div></div>
+          <div class="s"><div class="k">Volume headroom</div><div class="v">10x</div><div class="d">Quotes without linear heads</div></div>
+        </div>
+        <h4>The architecture (why it is cheap)</h4>
+        <p>A three-layer stack: applications on top, a custom "harness" in the middle that injects logistics context and enforces constraints, and interchangeable LLMs and clouds underneath. Big models are only invoked when necessary, which keeps token counts low and grounds outputs in real shipment data <span class="src">Jefferies</span>. Robinson calls the agent ecosystem the "Agentic Supply Chain" and the "Always-on Logistics Planner" <span class="src">Evercore</span>.</p>
+        <h4>Restructuring behind it</h4>
+        <p>2024 program: $45.7M of charges to flatten management and consolidate real estate. 2025 program: three years, $50–75M total, $30.4M taken in 2025, aimed at AI-driven process optimisation and office footprint <span class="src">10-K</span>.</p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card" style="border-color:rgba(25,158,112,.45)">
+        <h3><span class="tag green">Structural</span> &nbsp;The bull view</h3>
+        <ul>
+          <li>Jefferies: gains are "structural and permanent"; incremental margins on new volume exceed 100%.</li>
+          <li>Both segments hit mid-cycle margin targets at the cycle trough. StoneX: pre-Lean-AI, 2Q26's spot spike would have cost several hundred more basis points of margin.</li>
+          <li>Management to GS: confident it can absorb "significantly more inbound load requests without adding heads" in NAST; GF tools still being rolled out.</li>
+          <li>Mizuho used Robinson as a software-sector case study in real AI adoption.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(230,103,103,.45)">
+        <h3><span class="tag red">Cyclical</span> &nbsp;The bear view</h3>
+        <ul>
+          <li>Former VPs: margin expansion is "almost entirely" cost takeout; experienced commercial staff left; the company may need to rehire to scale in an upturn <span class="src">Expert calls</span>.</li>
+          <li>Incentive comp is already pushing 2026 personnel to the high end of guidance: leverage partly cyclical <span class="src">Deutsche Bank</span>.</li>
+          <li>Automated quotes are rigid and often pricier than human negotiation; win rate at one customer fell from 90% to 50%.</li>
+          <li>Ex-Uber Freight CCO: legacy brokers' AI prioritises internal cost cuts over customer-facing innovation.</li>
+        </ul>
+      </div>
+      <div class="card accent">
+        <h3>How to referee the debate</h3>
+        <p>Watch three numbers each quarter:</p>
+        <ol>
+          <li><strong>Volume growth vs Cass.</strong> If share gains continue while headcount falls, the "relationships walked out" thesis is wrong.</li>
+          <li><strong>Personnel ÷ AGP.</strong> Bulls need this to keep falling toward ~44% (Jefferies 2027E) even as incentive comp rises.</li>
+          <li><strong>AGP per shipment in NAST TL.</strong> Flat in 2Q26 despite a 29% cost surge. If it rises in 4Q26–1H27 as contracts reprice while heads stay flat, incremental margins will show up as guided.</li>
+        </ol>
+        <p>Management's own scorecard: 2026 adjusted operating income of $964M–$1.04B versus $553M in 2023 with a smaller company, on a market that shrank.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ RATE CYCLE ============ -->
+<section class="sec" id="cycle">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">The truckload rate cycle</span><h2>Where we are in the cycle, and what an upturn does to Robinson's EPS</h2>
+    <p class="lede">Trucking is a textbook commodity cycle. Rates rise, carriers buy trucks and hire drivers, capacity floods in, rates collapse, carriers go bankrupt, capacity leaves, rates rise again. The 2022–2025 downturn was the longest on record (Bernstein: trucking "ran below cost for three years"). In 2026 the supply side finally broke, which is why spot rates are up 34–36% year over year while shipment volumes are still falling.</p></div></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Spot vs contract dry-van rates ($/mile, ex-fuel)</h3>
+        <div class="chart-wrap"><canvas id="chRates"></canvas></div>
+        <div class="chart-note">Indicative monthly series built from cited datapoints: DAT dry van spot ~$1.80 before RoadCheck (UBS, May 2026) → ~$2.05 in early June → $2.32 early Aug → $2.25 mid-Aug 2026; contract $2.38 (Jul) → $2.42 (Aug) per DAT. Morgan Stanley (10 Sep): August spot +36% y/y and −8% m/m, contract +21% y/y. Jefferies: spot ex-fuel crossed above contract in 1H26 for the first time since February 2022. Pre-2026 path is a stylised reconstruction of the 2022–25 downturn (spot fell to ~$1.60–1.70 in 2023) and is labelled approximate.</div>
+      </div>
+      <div class="card">
+        <h3>The cycle scorecard, September 2026</h3>
+        <div class="tbl-scroll"><table class="tbl">
+          <tr><th style="text-align:left">Indicator</th><th>Latest</th><th style="text-align:left">Read-through</th></tr>
+          <tr><td>DAT dry van spot (linehaul)</td><td class="num">$2.25–2.32/mi, +26% vs 9-yr avg</td><td style="text-align:left;color:var(--muted)">Cooled from the June peak but near the top of the range <span class="src">DAT Aug 2026</span></td></tr>
+          <tr><td>Spot vs contract, y/y</td><td class="num">+36% vs +21%</td><td style="text-align:left;color:var(--muted)">Spread narrowing from June; still wide = contract repricing ahead <span class="src">MS Sep 2026</span></td></tr>
+          <tr><td>Cass shipments</td><td class="num">−9.3% y/y (Aug)</td><td style="text-align:left;color:var(--muted)">Demand still weak; the rally is supply-driven <span class="src">Cass</span></td></tr>
+          <tr><td>Cass expenditures</td><td class="num">+42% y/y (Aug)</td><td style="text-align:left;color:var(--muted)">90% of the rise is rates; shippers' freight bills are exploding</td></tr>
+          <tr><td>MS Truckload Freight Index</td><td class="num">Highest for Sep in ~30 yrs</td><td style="text-align:left;color:var(--muted)">Off early-June peak to "sustainable but elevated" <span class="src">MS</span></td></tr>
+          <tr><td>Tender rejections</td><td class="num">"Down" (shippers)</td><td style="text-align:left;color:var(--muted)">Route guides holding; contract rates "flattening" <span class="src">MS shipper survey</span></td></tr>
+          <tr><td>Class 8 orders</td><td class="num">16.8–18.2k (Aug), +31–42% y/y</td><td style="text-align:left;color:var(--muted)">2026 build slots sold out; 2027 pre-buy ahead of EPA engine rules. New trucks = future capacity <span class="src">ACT, FTR</span></td></tr>
+          <tr><td>Capacity exits</td><td class="num">ELP/CDL enforcement, DOT crackdown</td><td style="text-align:left;color:var(--muted)">English-proficiency and licence enforcement removing drivers; small carriers' insurance costs rising post-Montgomery <span class="src">MS, JMP, UBS</span></td></tr>
+          <tr><td>2026 shipper rate expectation</td><td class="num">+7.1% ex-fuel</td><td style="text-align:left;color:var(--muted)">Highest since July 2018 <span class="src">MS survey</span></td></tr>
+          <tr><td>Management's FY26 spot assumption</td><td class="num">+34% y/y</td><td style="text-align:left;color:var(--muted)">Raised from +17%; expects another 4Q holiday spike <span class="src">MS 2Q26</span></td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card">
+        <h3>Phase 1 (now): supply shock, spread squeeze</h3>
+        <p>Spot buy rates jump faster than contract sell rates. Robinson's NAST gross margin fell to 13.1%. Gross revenue booms (+23%) but AGP grows slowly (+8.6%, all from LTL). Landstar (100% spot) and asset-based carriers with owned trucks capture the upside immediately. Estimates for 3Q26 get trimmed (UBS 3Q26E $1.69 → $1.64).</p>
+        <div class="bar"><i style="width:100%"></i></div>
+      </div>
+      <div class="card">
+        <h3>Phase 2 (4Q26–1H27): contracts reprice</h3>
+        <p>The 2026–27 bid season resets 70% of the book at higher sell rates (Stephens: +10–15% ex-fuel; UBS models +9–10% TL base pricing in 2027). If spot plateaus, the spread widens and AGP per load rises 2–3 quarters after the spot surge. UBS: NAST gross margin back to ~14% in 2027; Jefferies models 2027 AGP +9% and EPS +26% to $7.70.</p>
+        <div class="bar"><i style="width:40%;background:var(--aqua)"></i></div>
+      </div>
+      <div class="card">
+        <h3>Phase 3 (2027+): does demand show up?</h3>
+        <p>So far this is a supply-driven upcycle with Cass volumes still negative. GS: "the next lever of spot-rate growth must come from volume demand." If demand recovers, Robinson's fixed-cost base (personnel ÷ AGP at 44%) converts volume into 100%+ incremental margins. If demand stays weak and 2027 Class 8 deliveries add capacity, the cycle rolls over: UBS warns a second year of falling spot rates is "a meaningful headwind".</p>
+        <div class="bar"><i style="width:10%;background:var(--violet)"></i></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Eighteen years of the squeeze: Robinson's truckload price vs cost per mile, year over year</h3>
+      <div class="chart-wrap tall"><canvas id="chPxCost"></canvas></div>
+      <div class="chart-note">NAST truckload price per mile charged to customers vs cost per mile paid to carriers, year-over-year % change, with truckload volume growth. Source: Goldman Sachs model "Volume, Pricing, Cost History" tab (1Q08–1Q26, company-disclosed directional figures) plus 2Q26 actuals (+25.5% price, +29% cost, +0.5% volume). Every time the orange cost line rises above the blue price line (2011, 2014, 2017–18, 2021, 1H26) NAST gross margin compresses; every time it drops below (2009, 2015–16, 2019, 2022–23) margin expands. Note volume tends to fall when Robinson defends margin (2018, 2023–24) and rise when it buys share (2019–21, 2025).</div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>How Robinson's earnings have tracked past cycles</h3>
+      <div class="chart-wrap"><canvas id="chCycleEps"></canvas></div>
+      <div class="chart-note">Adjusted EPS by year with the freight-cycle backdrop. 2021–22 pandemic peak ($6.91 / $7.40 approx from broker models), 2023 trough ($3.22), recovery on cost-out rather than volume ($4.51, $5.09), and broker forecasts for 2026–28 (UBS high, Morgan Stanley low, GS/Jefferies middle). The key claim of the bull case is that the next peak is higher because the cost base is smaller; the bear case is that MS's "normalized EPS closer to $5 than $10" is where the cycle settles. Sources: UBS, GS, Jefferies, MS models and notes.</div>
+    </div>
+  </div>
+</section>
+<!-- ============ MOAT ============ -->
+<section class="sec" id="moat">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Competitive moat</span><h2>Is there a moat in matching trucks to loads?</h2>
+    <p class="lede">Historically, freight brokerage had low barriers to entry: a phone, a load board and a $75,000 surety bond. Robinson's argument is that scale, data, technology and now regulation have turned a commodity service into a network business. The bears say a spread business with 15,000 competitors can never be a fortress.</p></div></div>
+
+    <div class="grid g3">
+      <div class="card accent">
+        <span class="tag blue">Moat source 1</span>
+        <h3 style="margin-top:10px">Scale and network density</h3>
+        <p>$11.6B of NAST gross revenue is >50% larger than #2 TQL ($7.4B in 2025) and ~3x RXO. With 37M shipments a year and 450,000 carriers, Robinson sees more price points on more lanes than anyone. That transaction density lets it (a) find a truck faster in a tight market, (b) price contracts more accurately, and (c) offer carriers denser backhaul opportunities, which attracts more carriers. Deutsche Bank calls this a "self-reinforcing flywheel". Jefferies: the industry is consolidating to a top 5–10.</p>
+      </div>
+      <div class="card accent">
+        <span class="tag blue">Moat source 2</span>
+        <h3 style="margin-top:10px">Proprietary technology and data</h3>
+        <p>Navisphere is fully owned, so Robinson keeps every byte of shipment, pricing and carrier-behaviour data and trains its own models on it. The AI layer is architected to be cloud- and LLM-agnostic, with a custom harness that injects logistics context and keeps token spend at ~$1–1.5M a year <span class="src">Jefferies, GS HQ visit</span>. Enterprise shippers integrate Navisphere into their own TMS, which creates switching costs <span class="src">Expert call</span>.</p>
+      </div>
+      <div class="card accent">
+        <span class="tag blue">Moat source 3 (new)</span>
+        <h3 style="margin-top:10px">The regulatory moat after Montgomery</h3>
+        <p>The May 2026 Supreme Court ruling makes brokers suable in state court for negligent carrier selection. Insurance underwriters will now price carrier-vetting rigour into premiums. Management told Goldman three things follow: small brokers cannot get insurance; those that can cannot afford it; shippers move to large, well-insured brokers <span class="src">GS HQ visit, Aug 2026</span>. Jefferies expects the long tail of 15,000+ brokers to shrink. Bernstein agrees on consolidation but says the winners are asset-based carriers, not brokers.</p>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <h3>Evidence for the moat: 13 straight quarters of outgrowing the market</h3>
+        <div class="chart-wrap"><canvas id="chShare"></canvas></div>
+        <div class="chart-note">NAST truckload volume growth vs the Cass Freight Shipments Index, year over year. Sources: UBS (4Q25 +3.0% vs Cass −7.6%; 1Q26 −3.5% vs −6.2%; 2Q26 +0.5% vs −3.3%), Jefferies (1H26 Cass −4.7%), Cass (Aug 2026 shipments −9.3%). Earlier quarters are the trend implied by the "13 consecutive quarters" streak cited by Evercore and Deutsche Bank and are marked as approximate.</div>
+      </div>
+      <div class="card">
+        <h3>The case against a moat</h3>
+        <ul>
+          <li><strong>It is still a spread business.</strong> Cleveland Research argues price transparency, shorter contracts and industry cost-cutting will push mid-cycle net revenue margins from ~15% toward 10% over time.</li>
+          <li><strong>Relationships walked out the door.</strong> Former Robinson VPs say centralisation and an 11–12% headcount cut removed senior account managers; an expert at Middleby reports Robinson's automated quotes are pricier and less flexible, cutting its win rate there from 90% to 50% <span class="src">Expert calls via AlphaSense</span>.</li>
+          <li><strong>Asset-based carriers are integrating.</strong> J.B. Hunt, Knight-Swift and Schneider run their own brokerage arms with the advantage of owned capacity and self-insured working layers. Rail intermodal is building direct channels.</li>
+          <li><strong>Disintermediation by AI.</strong> TD Cowen flags the long-run risk that shippers use commoditised AI models to run their own matching.</li>
+          <li><strong>Deepest pockets = biggest target.</strong> Bernstein: Robinson's scale buys survivability but makes it the preferred defendant in broker-liability suits.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPETITION ============ -->
+<section class="sec" id="competition">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Competitive landscape</span><h2>Who else moves freight, and how their model differs</h2>
+    <p class="lede">Four archetypes compete with Robinson: other large brokers, digital-native brokers, asset-based truckers with brokerage arms, and giant integrators. Each was hit differently by the 2022–2025 freight recession and by the new liability regime.</p></div></div>
+
+    <div class="card">
+      <div class="tbl-scroll"><table class="tbl">
+        <tr><th style="text-align:left">Competitor</th><th style="text-align:left">Archetype</th><th>Scale</th><th style="text-align:left">Model vs Robinson</th><th style="text-align:left">Recent development</th></tr>
+        <tr><td><strong>TQL</strong> (private)</td><td style="text-align:left">Large broker</td><td class="num">$7.4B rev 2025</td><td style="text-align:left;color:var(--muted)">Sales-driven; same rep sells to shipper and buys from carrier. Robinson separates the two.</td><td style="text-align:left;color:var(--muted)">Grew from $3.4B (2019) to $7.4B (2025) <span class="src">UBS</span>. #2 in U.S. truck brokerage.</td></tr>
+        <tr><td><strong>RXO</strong> (RXO)</td><td style="text-align:left">Large public broker</td><td class="num">~$1.6B/qtr</td><td style="text-align:left;color:var(--muted)">73% contract (similar to CHRW). Tech-enabled consolidator.</td><td style="text-align:left;color:var(--muted)">Bought Coyote from UPS for $1.025B; net leverage 3.7x vs CHRW 1.3–1.6x; trades ~33–43x 2027 EPS, a premium to CHRW <span class="src">Deutsche Bank, StoneX, Benchmark</span>.</td></tr>
+        <tr><td><strong>Landstar</strong> (LSTR)</td><td style="text-align:left">Agent-based, 100% spot</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Every load reprices in real time, so it captured 2Q26's spot surge immediately while CHRW's contract book squeezed <span class="src">Jefferies</span>.</td><td style="text-align:left;color:var(--muted)">GS also cut its Landstar multiple post-Montgomery.</td></tr>
+        <tr><td><strong>Uber Freight</strong>, ex-Convoy, Transfix</td><td style="text-align:left">Digital-native</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">VC-funded, app-first, priced to win share.</td><td style="text-align:left;color:var(--muted)">Convoy collapsed in 2023; Wolfe says failures of digital-first entrants structurally limit new threats. Ex-Uber Freight CCO still argues legacy brokers struggle "from man to machine".</td></tr>
+        <tr><td><strong>J.B. Hunt, Knight-Swift, Schneider, Werner</strong></td><td style="text-align:left">Asset-based with brokerage</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Own trucks and drivers; self-insure working layers; brokerage arm fills gaps.</td><td style="text-align:left;color:var(--muted)">Bernstein's thesis: post-Montgomery risk repricing favours these over asset-light brokers. Insurance ~5%+ of revenue vs CHRW <1%.</td></tr>
+        <tr><td><strong>Echo, Arrive, Worldwide Express, Coyote</strong></td><td style="text-align:left">Mid-tier brokers</td><td class="num">$1–5B</td><td style="text-align:left;color:var(--muted)">Sub-scale versions of CHRW; 40% of the market is brokers under $1B revenue.</td><td style="text-align:left;color:var(--muted)">The consolidation pool. Deutsche Bank sees CHRW with $850M–$2B of M&amp;A capacity.</td></tr>
+        <tr><td><strong>Amazon</strong></td><td style="text-align:left">Vertically integrated</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Owns warehouses, trucks, planes, cloud; now selling B2B logistics.</td><td style="text-align:left;color:var(--muted)">Flagged by an energy-sector expert as a long-run threat to 3PLs.</td></tr>
+        <tr><td><strong>Expeditors, Kuehne+Nagel, DSV, Flexport</strong></td><td style="text-align:left">Forwarders (vs Global Forwarding)</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Same buy-bulk, resell model for ocean and air.</td><td style="text-align:left;color:var(--muted)">CHRW's GF is a mid-sized player; Jefferies lists a GF sale or spin as a potential catalyst.</td></tr>
+      </table></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <h3>2Q26 head-to-head: how the contract-heavy vs spot models performed</h3>
+        <div class="chart-wrap short"><canvas id="chPeers"></canvas></div>
+        <div class="chart-note">Source: AlphaSense primer benchmarking table (2Q26). CHRW revenue +19.3%, brokerage volume +1.5%, gross margin 15.0%, adjusted operating income $263M. RXO revenue +25%, volume +2%, brokerage gross margin 11.9%, adjusted EBITDA $40M. Robinson's ~15% consolidated gross margin vs RXO's ~12% shows the scale and mix advantage.</div>
+      </div>
+      <div class="card">
+        <h3>Market structure in one picture</h3>
+        <div class="chart-wrap short"><canvas id="chMarket"></canvas></div>
+        <div class="chart-note">Illustrative U.S. truck brokerage share. CHRW ~14–15% (Jefferies); TQL sized at ~9% and RXO ~5% from the relative-scale statements ($11.6B NAST vs TQL $7.4B vs "nearly 3x RXO"); "Brokers under $1B revenue" ~40% (Deutsche Bank); remainder other mid-tier brokers. Treat as an order-of-magnitude map rather than a measured share table.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ LEGAL ============ -->
+<section class="sec" id="legal">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">The dominant debate</span><h2>Montgomery, the $604M Lipe verdict, and the insurance repricing</h2>
+    <p class="lede">Until May 2026, a federal law (the FAAAA) shielded brokers from state lawsuits claiming they negligently hired an unsafe carrier. That shield is gone. Ten weeks later a Texas jury handed Robinson the largest broker verdict in history. This section explains what happened, what it could cost, and why analysts disagree by $80 a share about what it means.</p></div></div>
+
+    <div class="grid g32">
+      <div class="card">
+        <h3>Timeline</h3>
+        <div class="timeline">
+          <div class="ev"><div class="d">Mar 2021</div><div class="t">The crash</div><div class="x">A truck operated by Lupus Superior, a small carrier hired by Robinson, rams stopped traffic on I-20 near Jackson, Mississippi. Six vehicles, three deaths. Plaintiffs later show FMCSA had flagged Lupus for unsafe-driving alerts for over a year and that the driver told both Lupus and Robinson he was too sick to drive that night <span class="src">CCJ, Bernstein</span>.</div></div>
+          <div class="ev red"><div class="d">14 May 2026</div><div class="t">Supreme Court: <i>Montgomery v. Caribe Transport II</i></div><div class="x">Unanimous ruling that state-law negligent-hiring claims against freight brokers are <strong>not preempted</strong> by the Federal Aviation Administration Authorization Act. The primary federal defence brokers relied on for two decades is removed <span class="src">Bernstein, Jefferies</span>.</div></div>
+          <div class="ev"><div class="d">1 Jun 2026</div><div class="t">UBS quantifies the cost</div><div class="x">Insurance and claims for CHRW could double from ~$60M to ~$120M. A $60M opex hit is offset by ~3 percentage points of NAST gross profit growth. UBS expects &gt;3pp from share shift plus higher rates, so a net EPS tailwind.</div></div>
+          <div class="ev red"><div class="d">23 Jul 2026</div><div class="t">Dallas County jury: $604M advisory verdict in <i>Lipe v. Lupus Superior</i></div><div class="x">Fault split 45% driver, 32% carrier, <strong>23% Robinson (~$139M)</strong>. But the jury also found the driver was Robinson's "borrowed employee", which under Texas joint-and-several liability could make Robinson liable for the <strong>whole $604M</strong> if co-defendants cannot pay. Lupus held a "Satisfactory" FMCSA safety rating. Robinson's insurance tower: <strong>$135M</strong> above a $10M self-insured retention <span class="src">TD Cowen, Stephens</span>.</div></div>
+          <div class="ev"><div class="d">24–30 Jul 2026</div><div class="t">Robinson says it will appeal; shares fall from ~$206 to ~$147</div><div class="x">The verdict is advisory until the judge enters final judgment. Robinson "strongly disagrees" and will appeal immediately once judgment is entered. Appeals could take 5–7 years <span class="src">Deutsche Bank</span>. GS cuts its multiple half a turn to 23.5x; TD Cowen and Bernstein cut 2027 EPS.</div></div>
+          <div class="ev"><div class="d">Aug 2026</div><div class="t">Underwriters reprice</div><div class="x">Primary broker auto-liability layers +20–40%, excess layers +30–50%; a top-10 broker saw a 3x excess-layer renewal; some brokers face 300–900% increases <span class="src">TD Cowen insurance-expert call</span>. Bernstein (11 Aug) projects a $120M pre-tax headwind to 2027 operating income, ~$0.78 EPS.</div></div>
+          <div class="ev green"><div class="d">Sep 2026</div><div class="t">Status</div><div class="x">No final judgment or ruling on appeal reported as of 11 Sep 2026. Management still targets the 2026 operating income range. The stock trades at $152, roughly where it settled after the verdict.</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Sizing the exposure</h3>
+          <div class="verdict">
+            <div class="v"><div class="n" style="color:var(--red)">$604M</div><div class="l">Total advisory verdict</div></div>
+            <div class="v"><div class="n">$139M</div><div class="l">Robinson's 23% several share</div></div>
+            <div class="v"><div class="n">$135M</div><div class="l">Insurance tower (above $10M retention)</div></div>
+          </div>
+          <div class="chart-wrap short" style="margin-top:14px"><canvas id="chVerdict"></canvas></div>
+          <div class="chart-note">Scenarios: (a) several liability only, covered by insurance; (b) full joint-and-several liability, ~$470M funded from cash against ~$900M liquidity and ~$840M FCF in 2025; (c) verdict reduced or overturned on appeal. Even the worst case is a one-off equal to about six months of free cash flow. The market's bigger worry is the recurring cost: insurance premiums and future suits.</div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>The recurring cost: what the analysts model</h3>
+          <div class="tbl-scroll"><table class="tbl">
+            <tr><th style="text-align:left">House</th><th>Assumption</th><th>EPS impact</th></tr>
+            <tr><td>UBS (Jun 26)</td><td class="num">Insurance $60M → $120M</td><td class="num">Offset by &gt;3pp NAST GP; net positive</td></tr>
+            <tr><td>Wolfe (Jul 26)</td><td class="num">Each +100% in liability cost = $50M pre-tax</td><td class="num">−$0.35 per doubling</td></tr>
+            <tr><td>Bernstein (Aug 26)</td><td class="num">$120M 2027 op income headwind</td><td class="num">−$0.78</td></tr>
+            <tr><td>TD Cowen (Jul 26)</td><td class="num">Premium inflation from 2027 renewals</td><td class="num">2027E cut to $7.25</td></tr>
+            <tr><td>Stephens (Jul 26)</td><td class="num">Claims/insurance escalation</td><td class="num">2027E trimmed to $7.20</td></tr>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card" style="border-color:rgba(25,158,112,.45)">
+        <h3><span class="tag green">Bull reading</span> &nbsp;A moat, not a wound</h3>
+        <ul>
+          <li>Compliance, vetting and insurance towers are <strong>fixed costs</strong>; sub-scale brokers "whose indemnity is worthless against large verdicts" face terminal pressure (even Bernstein concedes this) <span class="src">Bernstein</span>.</li>
+          <li>Channel checks already show intermediaries shifting volume to large brokers on fears small ones cannot afford insurance <span class="src">Wolfe, Aug 2026</span>.</li>
+          <li>Robinson already vets 450,000 carriers with a scaled compliance team; the marginal cost of doing it better is small relative to $2.7B of AGP.</li>
+          <li>Jefferies: the "headline shock value is doing more work than the underlying facts"; a broker has no control over a carrier's driver, and the vicarious-liability finding is legally novel and appealable.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(230,103,103,.45)">
+        <h3><span class="tag red">Bear reading</span> &nbsp;Asset-light just became liability-heavy</h3>
+        <ul>
+          <li>Robinson pays <strong>&lt;1% of gross revenue</strong> on insurance vs ~5%+ for asset-based carriers. Convergence toward "truck-like" pricing is a multi-hundred-million-dollar problem <span class="src">Bernstein</span>.</li>
+          <li><strong>Double hit:</strong> small carriers pass their own premium inflation into buy rates, while Robinson competes for contract freight against self-insured asset carriers and cannot fully pass it on. "Hits both the spread and expense."</li>
+          <li>The jury found negligence despite a Satisfactory FMCSA rating, so the standard is now ambiguous. A "catch-22": gathering more driver data to vet better can itself be evidence of control that triggers vicarious liability <span class="src">TD Cowen</span>.</li>
+          <li>State lookback windows of 3–5 years mean reserves for past accidents could hit the P&amp;L before any appeal resolves.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRADE / TARIFFS ============ -->
+<section class="sec" id="trade">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Tariffs &amp; global trade</span><h2>Global Forwarding: the ocean and air business exposed to trade policy</h2>
+    <p class="lede">About a quarter of Robinson's AGP comes from moving containers and air cargo across borders, mostly Asia to North America. Forwarding earns a spread on freight rates, so it is a levered bet on transpacific volumes and on ocean and air rate volatility.</p></div></div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3>How forwarding makes money</h3>
+        <p>Robinson signs volume commitments with ocean carriers and airlines at wholesale rates, then sells slots to thousands of importers at retail, plus clears customs (a fee business). Gross margin runs 21–25% of gross revenue, higher than trucking, because service content (documentation, consolidation, customs) is larger.</p>
+        <p><strong>Volatility is the friend and enemy.</strong> Ocean AGP swung from +64% to −53% year over year within the 2021–2023 cycle (Jefferies chart). In 2Q26 air AGP rose 23% on +33% AGP per ton as armed conflicts tightened air capacity, while ocean AGP fell 2.8% on softer rates and customs AGP fell 9.4%.</p>
+      </div>
+      <div class="card">
+        <h3>Tariffs and transpacific</h3>
+        <ul>
+          <li><strong>China tariffs</strong> pull import volumes forward and then create air pockets. GS lists "negative impact from tariffs" as an explicit downside risk; ocean and air demand "remaining muted" is the base-case worry.</li>
+          <li><strong>De minimis changes</strong> (ending duty-free treatment for small e-commerce parcels) shift volume from air parcel to consolidated ocean and increase customs-brokerage work per shipment, a mixed effect for GF.</li>
+          <li><strong>Sourcing shifts</strong> to Vietnam, India, Mexico play to Robinson's footprint (subsidiaries in Vietnam, India, Thailand, Malaysia, Mexico) and to the Laredo cross-border hub.</li>
+          <li>GS tracked GF AGP per day decelerating from +9% in April to +7% in May and +3% in June 2026 as ocean rates and volumes weakened <span class="src">GS 2Q26</span>.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Why bulls still like Global Forwarding</h3>
+        <ul>
+          <li>Operating margin hit <strong>33.4% of AGP in 2Q26</strong> vs a 30% target, +470–490bp year over year, with headcount down 16.6%. The Lean AI playbook is only in its "first inning" here <span class="src">Evercore, Jefferies</span>.</li>
+          <li>Deutsche Bank: GF margin beat the sell side by 4.8 points; the upside surprise in 2Q was forwarding, not trucking.</li>
+          <li>UBS raised 2027 forwarding GP to $793M (from $717M) after 2Q while cutting NAST.</li>
+          <li>Strategic option: Jefferies lists a potential sale or spin of Global Forwarding as a catalyst.</li>
+        </ul>
+        <div class="chart-wrap short" style="margin-top:8px"><canvas id="chGF"></canvas></div>
+        <div class="chart-note">Global Forwarding AGP by product, 2Q26 ($M): Ocean 105.0, Air 42.3, Customs 31.8, Other 9.7 <span class="src">GS Exhibit 1</span>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ FINANCIALS ============ -->
+<section class="sec" id="financials">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Financials</span><h2>Fifteen years of numbers: revenue, spread, profit, cash and capital returns</h2>
+    <p class="lede">Gross revenue tells you about the freight cycle. AGP tells you about the spread. Operating income tells you about the cost base. The story of 2010–2026 is a business whose spread margin drifted down for a decade, whose profit was hostage to the cycle, and which since 2023 has broken the link between AGP and headcount. Historical data from the Bernstein, Goldman Sachs and Morgan Stanley models; forecasts as labelled.</p></div></div>
+
+    <div class="card">
+      <div class="ctrl" id="finCtrl">
+        <button class="btn active" data-m="rev">Gross revenue</button>
+        <button class="btn" data-m="agp">Adjusted gross profit</button>
+        <button class="btn" data-m="opinc">Adjusted operating income</button>
+        <button class="btn" data-m="eps">Adjusted EPS</button>
+        <button class="btn" data-m="gm">AGP margin % of revenue</button>
+        <button class="btn" data-m="om">Op. income % of AGP</button>
+        <button class="btn" data-m="hc">Headcount</button>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chFin"></canvas></div>
+      <div class="chart-note" id="finNote"></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <h3>Segment AGP and operating income, quarterly (1Q25 → 4Q27E)</h3>
+        <div class="ctrl">
+          <button class="btn active" data-q="agp">AGP by segment</button>
+          <button class="btn" data-q="op">Operating income by segment</button>
+          <button class="btn" data-q="margin">Operating margin by segment</button>
+        </div>
+        <div class="chart-wrap"><canvas id="chQtr"></canvas></div>
+        <div class="chart-note">Source: Jefferies model (29 Jul 2026). Actuals through 2Q26; 3Q26–4Q27 are Jefferies estimates. Note the seasonal pattern: 2Q and 3Q are the strong quarters, 4Q and 1Q softer.</div>
+      </div>
+      <div class="card">
+        <h3>Cash flow and capital returns</h3>
+        <div class="chart-wrap"><canvas id="chCash"></canvas></div>
+        <div class="chart-note">Free cash flow, dividends and buybacks, $M. FCF is counter-cyclical: it spikes when rates fall (receivables shrink: 2022 $1.52B, 2025 $844M) and collapses when rates rise (2021 $24M; 2Q26 $18M on a $507M receivables build). 2026E per Jefferies ($483M FCF, $632M buybacks). The $2B repurchase authorisation (Oct 2025) runs ~3 years. Sources: primer (2021–25), Jefferies and GS models (2026–27E).</div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card">
+        <h3>Balance sheet, 30 Jun 2026</h3>
+        <div class="tbl-scroll"><table class="tbl">
+          <tr><th style="text-align:left">Item</th><th>$M</th></tr>
+          <tr><td>Cash</td><td class="num">155</td></tr>
+          <tr><td>Receivables + contract assets</td><td class="num">3,286</td></tr>
+          <tr><td>Goodwill &amp; intangibles</td><td class="num">1,485</td></tr>
+          <tr><td>Total assets</td><td class="num">5,844</td></tr>
+          <tr><td>Accounts payable &amp; accrued transport</td><td class="num">1,875</td></tr>
+          <tr><td>Total debt</td><td class="num">1,685</td></tr>
+          <tr><td>Equity</td><td class="num">1,628</td></tr>
+          <tr><td><strong>Net debt</strong></td><td class="num"><strong>1,530</strong></td></tr>
+          <tr><td>Net debt / TTM EBITDA</td><td class="num">1.6x</td></tr>
+          <tr><td>Total liquidity</td><td class="num">~900</td></tr>
+        </table></div>
+        <div class="chart-note">Source: Jefferies model, 10-Q via primer. Debt: $1B revolver ($325M drawn, Nov 2027), $500M receivables securitisation ($437M drawn, Aug 2027), $600M senior notes (Apr 2028), $150M Series B (Aug 2028), $175M Series C (Aug 2033). Covenant max leverage 3.75x.</div>
+      </div>
+      <div class="card">
+        <h3>2026 guidance and where the Street sits</h3>
+        <div class="tbl-scroll"><table class="tbl">
+          <tr><th style="text-align:left">Item</th><th>Guidance</th><th>Street</th></tr>
+          <tr><td>Adj. operating income</td><td class="num">$964M–1,040M</td><td class="num">$950–980M</td></tr>
+          <tr><td>Personnel expense</td><td class="num">$1.25–1.35B (high end)</td><td class="num">~$1.35B</td></tr>
+          <tr><td>SG&amp;A</td><td class="num">$540–580M</td><td class="num">~$560M</td></tr>
+          <tr><td>D&amp;A</td><td class="num">$95–105M (low end)</td><td class="num">~$98M</td></tr>
+          <tr><td>Capex</td><td class="num">$65–75M</td><td class="num">~$70M</td></tr>
+          <tr><td>Tax rate</td><td class="num">—</td><td class="num">~19–21%</td></tr>
+          <tr><td>Adj. EPS</td><td class="num">"$6+" at low end</td><td class="num">$6.10–6.35 (MS $5.73)</td></tr>
+          <tr><td>Industry volume assumption</td><td class="num">−3% (low end)</td><td class="num">Cass 1H26 −4.7%</td></tr>
+        </table></div>
+        <div class="chart-note">Guidance per 2Q26 call (Bernstein, GS, Jefferies, MS notes). Street = range of UBS/GS/Jefferies/MS estimates.</div>
+      </div>
+      <div class="card">
+        <h3>Returns and quality</h3>
+        <div class="scoreboard">
+          <div class="s"><div class="k">ROIC 2025 (UBS)</div><div class="v">28%</div><div class="d">Post-tax 23%; 2027E 36%</div></div>
+          <div class="s"><div class="k">ROE 2025</div><div class="v">35%</div><div class="d">GS 2027E 55% (buybacks)</div></div>
+          <div class="s"><div class="k">Capex / revenue</div><div class="v">0.4%</div><div class="d">Mostly software</div></div>
+          <div class="s"><div class="k">FCF / net income 2025</div><div class="v">144%</div><div class="d">Working-capital release</div></div>
+          <div class="s"><div class="k">Dividend</div><div class="v">$2.48</div><div class="d">25+ yrs of increases; 1.6% yield</div></div>
+          <div class="s"><div class="k">Capital returned 2025</div><div class="v">$733M</div><div class="d">~125% of net income</div></div>
+          <div class="s"><div class="k">Shares outstanding</div><div class="v">~120M</div><div class="d">GS: 112M by 2028E</div></div>
+          <div class="s"><div class="k">Largest holders</div><div class="v">BlackRock 9.7%</div><div class="d">Vanguard 11.5%, State St 5.6%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SENSITIVITY ============ -->
+<section class="sec" id="sensitivity">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Interactive</span><h2>EPS sensitivity: flex the spread, the volume, the headcount and the insurance bill</h2>
+    <p class="lede">A simplified 2027 earnings model built from the driver tree. Start from a Jefferies-style base (2027E AGP $3.14B, EPS $7.70) and move the levers the analysts argue about. The output shows operating income, EPS, and the implied share price at your chosen multiple.</p></div></div>
+
+    <div class="grid g32">
+      <div class="card">
+        <div class="grid g2" style="gap:10px 24px">
+          <div class="slider"><label>NAST volume growth 2027 <b id="s_vol_v">+3%</b></label><input type="range" id="s_vol" min="-6" max="10" step="0.5" value="3"></div>
+          <div class="slider"><label>NAST gross margin (spread) 2027 <b id="s_gm_v">14.0%</b></label><input type="range" id="s_gm" min="11" max="17" step="0.1" value="14"></div>
+          <div class="slider"><label>NAST gross revenue growth (price) 2027 <b id="s_px_v">+5%</b></label><input type="range" id="s_px" min="-10" max="25" step="1" value="5"></div>
+          <div class="slider"><label>Global Forwarding AGP 2027 ($M) <b id="s_gf_v">$750M</b></label><input type="range" id="s_gf" min="600" max="900" step="10" value="750"></div>
+          <div class="slider"><label>Average headcount 2027 <b id="s_hc_v">11,000</b></label><input type="range" id="s_hc" min="9500" max="13500" step="100" value="11000"></div>
+          <div class="slider"><label>Personnel cost per head ($k) <b id="s_cph_v">$125k</b></label><input type="range" id="s_cph" min="100" max="145" step="1" value="125"></div>
+          <div class="slider"><label>Insurance &amp; claims expense ($M) <b id="s_ins_v">$60M</b></label><input type="range" id="s_ins" min="40" max="300" step="5" value="60"></div>
+          <div class="slider"><label>P/E multiple applied <b id="s_pe_v">24x</b></label><input type="range" id="s_pe" min="12" max="38" step="0.5" value="24"></div>
+        </div>
+        <div class="ctrl" style="margin-top:6px">
+          <button class="btn" data-preset="base">Base (Jefferies-like)</button>
+          <button class="btn" data-preset="ubs">UBS bull (spot → contract repricing)</button>
+          <button class="btn" data-preset="bern">Bernstein bear (insurance ×2, spread erodes)</button>
+          <button class="btn" data-preset="ms">MS bear (normalised ~$5–6)</button>
+          <button class="btn" data-preset="squeeze">Second spot spike, no repricing</button>
+        </div>
+      </div>
+      <div>
+        <div class="out">
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Implied 2027 adjusted EPS</div>
+          <div class="big" id="o_eps">$7.70</div>
+          <div class="row"><span>NAST gross revenue</span><b id="o_nrev">—</b></div>
+          <div class="row"><span>NAST AGP</span><b id="o_nagp">—</b></div>
+          <div class="row"><span>Total AGP</span><b id="o_agp">—</b></div>
+          <div class="row"><span>Personnel expense</span><b id="o_pers">—</b></div>
+          <div class="row"><span>Other SG&amp;A incl. insurance</span><b id="o_sga">—</b></div>
+          <div class="row"><span>Adjusted operating income</span><b id="o_oi">—</b></div>
+          <div class="row"><span>Op. income % of AGP</span><b id="o_om">—</b></div>
+          <div class="row"><span>Net income (19% tax, $60M interest)</span><b id="o_ni">—</b></div>
+          <div class="row"><span>Implied share price at multiple</span><b id="o_px">—</b></div>
+          <div class="row"><span>vs $152.42 today</span><b id="o_up">—</b></div>
+        </div>
+        <div class="chart-note">Model: NAST AGP = 2026E NAST revenue $13.76B × (1+volume) × (1+price) × gross margin. Fresh + Managed AGP fixed at $302M. Personnel = heads × cost per head. Base SG&amp;A ex-insurance $510M, plus your insurance line. Interest $60M, tax 19%, 118.5M diluted shares. Rule of thumb from the notes: 1pp of NAST gross margin ≈ $150M of AGP ≈ $1.00 of EPS; each $60M of insurance ≈ $0.41 EPS; 1,000 heads ≈ $125M ≈ $0.85 EPS.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Tornado: which lever moves 2027 EPS most?</h3>
+      <div class="chart-wrap"><canvas id="chTornado"></canvas></div>
+      <div class="chart-note">Each bar shows the EPS change from moving one lever between the bear and bull values seen in the broker notes, holding others at base. Gross margin dominates: the spread is the stock. Insurance is the second-largest swing factor and the newest.</div>
+    </div>
+  </div>
+</section>
+<!-- ============ VALUATION ============ -->
+<section class="sec" id="valuation">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Valuation</span><h2>What the market is paying, what the Street thinks it is worth, and why they disagree by 2.6x</h2>
+    <p class="lede">At $152 Robinson trades at roughly 24–25x 2026E and 20x 2027E consensus EPS, a premium to its 10-year average of ~20x but well below its 2025–26 peak of 27–33x. Price targets run from $91 (Morgan Stanley, a DCF on "normalized" EPS near $5) to $237 (Evercore). The spread is a disagreement about 2027 EPS ($6.07 to $8.20) multiplied by a disagreement about the multiple (12x to 37.5x).</p></div></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Live chart</h3>
+        <div class="tv" id="tv_chart"></div>
+        <div class="chart-note">TradingView. Shares fell from ~$206 (16 Jul 2026) to ~$147 after the 23 Jul verdict and 2Q26 print, and have traded $141–157 since. 52-week range $122–$210.</div>
+      </div>
+      <div class="card">
+        <h3>Street price targets vs share price</h3>
+        <div class="chart-wrap tall"><canvas id="chPT"></canvas></div>
+        <div class="chart-note">Sources: AlphaSense broker-view table (Sep 2026), individual notes. Method shown as multiple × EPS year. Consensus mean PT $200 per Refinitiv (MS note); 65% Overweight / 31% Equal-weight / 4% Underweight.</div>
+      </div>
+    </div>
+
+    <div class="grid g32" style="margin-top:18px">
+      <div class="card">
+        <h3>Valuation matrix: pick a 2027 EPS and a multiple</h3>
+        <p>Each cell is an implied share price. Rows span the bear-to-bull 2027 EPS range in the notes; columns span the multiples analysts actually apply. Current price $152 highlighted.</p>
+        <div class="tbl-scroll" id="valMatrix"></div>
+        <div class="chart-note">Reference points: MS base 17x normalized ~$5.35 = $91; Bernstein 21.5x × $7.05 = $151; TD Cowen 21x × $7.25 = $152; GS 23.5x × $7.64 (Q5–Q8) = $180; Jefferies 28.5x × $7.70 = $220; UBS 28x × $8.20 = $230; Jefferies bull 37.5x × $8.00 = $300.</div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Historical multiple context</h3>
+          <div class="chart-wrap short"><canvas id="chPE"></canvas></div>
+          <div class="chart-note">Forward P/E ranges. Wolfe: 5-yr avg 21x, 10-yr avg 20x, 1-yr peak avg 27x. CFRA: P/E high/low 48.0x/14.4x (2024), 33.0x/16.6x (2025); 3-yr forward avg 25.1x. Jefferies: 10-year range ~15x–30x+. Current NTM ~21.8x, EV/EBITDA ~16.8x (AlphaSense screener, Sep 2026).</div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>Why brokers have earned a premium multiple, and why that is in question</h3>
+          <ul>
+            <li><strong>For:</strong> asset-light = capex &lt;1% of revenue, ROIC 28–39%, FCF conversion &gt;100% through downturns, never an operating loss, 25+ years of dividend growth, $2B buyback.</li>
+            <li><strong>Against (TD Cowen):</strong> broker liability warrants a higher risk premium and narrows the gap to asset-based truckers (which trade mid-teens). GS and Wolfe both cut half a turn to two turns of multiple after the verdict.</li>
+            <li><strong>Against (MS):</strong> 2Q26 forwarding is "over-earning"; normalised EPS is ~$5, so 17x normalised = $91. MS has been Underweight since 2013 and its PT is the Street low.</li>
+            <li><strong>Peer check:</strong> RXO trades ~33–43x 2027 EPS on Coyote synergy hopes, so within brokers CHRW is the cheaper way to own the cycle <span class="src">StoneX, Benchmark, Susquehanna</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>The full broker table</h3>
+      <div class="tbl-scroll"><table class="tbl">
+        <tr><th style="text-align:left">Broker</th><th style="text-align:left">Rating</th><th>PT ($)</th><th>Method</th><th>2026E EPS</th><th>2027E EPS</th><th style="text-align:left">One-line view</th></tr>
+        <tr><td>Evercore ISI</td><td style="text-align:left">Outperform</td><td class="num">237</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Decoupling headcount from volume; 13 straight quarters of share gains; "third inning" of AI</td></tr>
+        <tr><td>JMP Securities</td><td style="text-align:left">Mkt Outperform</td><td class="num">235</td><td class="num">28–29x 2027E</td><td class="num">6.35</td><td class="num">8.15</td><td style="text-align:left;color:var(--muted)">Lower cost-to-serve drives structural margin gains; 35% premium to S&amp;P P/E</td></tr>
+        <tr><td>UBS</td><td style="text-align:left">Buy</td><td class="num">230</td><td class="num">28x 2027E</td><td class="num">6.22</td><td class="num">8.20</td><td style="text-align:left;color:var(--muted)">Street-high 2027; spot surge shows up in AGP 2–3 qtrs later; Montgomery a net tailwind</td></tr>
+        <tr><td>Susquehanna</td><td style="text-align:left">Positive</td><td class="num">226</td><td class="num">~30x 2027E</td><td class="num">—</td><td class="num">7.45</td><td style="text-align:left;color:var(--muted)">Positive revision cycle from lean/AI transformation</td></tr>
+        <tr><td>Jefferies</td><td style="text-align:left">Buy</td><td class="num">220</td><td class="num">28.5x 2027E</td><td class="num">6.10</td><td class="num">7.70</td><td style="text-align:left;color:var(--muted)">Scale, tech, regulatory moat; bull $300 / bear $130; would buy verdict weakness</td></tr>
+        <tr><td>Deutsche Bank</td><td style="text-align:left">Buy</td><td class="num">220</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td style="text-align:left;color:var(--muted)">Execution stands out; consolidator with $850M–2B firepower; legal overhang raises the bar</td></tr>
+        <tr><td>Stephens</td><td style="text-align:left">Overweight</td><td class="num">215</td><td class="num">—</td><td class="num">—</td><td class="num">7.20</td><td style="text-align:left;color:var(--muted)">"Cycle vs Montgomery"; contract +10–15% offsets claims inflation</td></tr>
+        <tr><td>StoneX</td><td style="text-align:left">Buy</td><td class="num">205</td><td class="num">27x 2027E</td><td class="num">6.35</td><td class="num">7.60</td><td style="text-align:left;color:var(--muted)">Mid-cycle margins and share gains despite legal risk</td></tr>
+        <tr><td>Wolfe Research</td><td style="text-align:left">Outperform</td><td class="num">196</td><td class="num">23x 2028E</td><td class="num">—</td><td class="num">(2028E 8.50)</td><td style="text-align:left;color:var(--muted)">Multiple cut from 25x for insurance; each doubling of liability cost = −$0.35 EPS</td></tr>
+        <tr><td>Goldman Sachs</td><td style="text-align:left">Neutral</td><td class="num">180</td><td class="num">23.5x Q5–Q8</td><td class="num">6.20</td><td class="num">7.30</td><td style="text-align:left;color:var(--muted)">Impressed by tech moat at HQ visit; multiple trimmed post-Montgomery; needs volume recovery</td></tr>
+        <tr><td>CFRA</td><td style="text-align:left">Hold</td><td class="num">165</td><td class="num">22x 2027E</td><td class="num">—</td><td class="num">7.50</td><td style="text-align:left;color:var(--muted)">Legal-risk discount to 25.1x 3-yr avg; DCF shows 25% downside if productivity plateaus</td></tr>
+        <tr><td>Bernstein</td><td style="text-align:left">Market-Perform</td><td class="num">151–153</td><td class="num">21.5x 2027E / 23.5x NTM+1</td><td class="num">~5.65–6.0</td><td class="num">6.68–7.05</td><td style="text-align:left;color:var(--muted)">Risk repricing favours asset-based; $120M / $0.78 insurance hit to 2027</td></tr>
+        <tr><td>TD Cowen</td><td style="text-align:left">Hold</td><td class="num">152</td><td class="num">21x 2027E</td><td class="num">6.05</td><td class="num">7.25</td><td style="text-align:left;color:var(--muted)">"Brokers enter a new operating paradigm"; premium inflation from 2027</td></tr>
+        <tr><td>Morgan Stanley</td><td style="text-align:left">Underweight</td><td class="num">91</td><td class="num">DCF 7% WACC, 2% g ≈ 17x normalised</td><td class="num">5.73</td><td class="num">6.07</td><td style="text-align:left;color:var(--muted)">Normalised EPS "closer to $5 than $10"; bull $225 / bear $65; UW since 2013</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+<!-- ============ BULL VS BEAR ============ -->
+<section class="sec" id="bullbear">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">The debate</span><h2>Bull vs Bear</h2>
+    <p class="lede">The Street is unusually polarised: price targets from $91 (Morgan Stanley) to $237 (Evercore) on a $152 stock. Both camps agree on the facts (2Q26 was a beat, margins hit targets, a $604M verdict is on appeal). They disagree on whether Lean AI is structural and whether Montgomery is a moat or a wound.</p></div></div>
+
+    <div class="bb">
+      <div class="card bull">
+        <h3><span class="tag green">Bull case</span> Structural earnings power the market is not paying for</h3>
+        <p><strong>Who:</strong> Evercore ($237), JMP ($235), UBS ($230), Susquehanna ($226), Jefferies ($220), Deutsche Bank ($220), Stephens ($215), StoneX ($205), Wolfe ($196).</p>
+        <ol>
+          <li><strong>Cost-to-serve is permanently lower.</strong> ~60% productivity gain since 2022, headcount −32%, both segments at mid-cycle margins in a trough. Incremental margins &gt;100% on new volume (Jefferies); 96% flow-through in 2Q26.</li>
+          <li><strong>The cycle is turning in Robinson's favour with a lag.</strong> Dry van spot up 34% y/y in 2Q26 and above contract for the first time since Feb 2022. Net revenue per load lags spot by 2–3 quarters, so 4Q26–2027 AGP should inflect (UBS Street-high 2027 EPS $8.20).</li>
+          <li><strong>Share gains are real and accelerating.</strong> 13 straight quarters of outgrowing Cass; post-Montgomery "flight to quality" pushes shippers to well-insured, scaled brokers; 15,000+ small brokers face an insurance wall.</li>
+          <li><strong>Balance sheet and buyback.</strong> $2B authorisation, ~$220M repurchased per quarter in 1H26, net debt 1.6x EBITDA, $850M–$2B of M&amp;A capacity.</li>
+          <li><strong>The verdict is a tail risk, not earnings power.</strong> Advisory, appealable for 5–7 years, worst case ~$470M above insurance vs ~$840M of 2025 FCF. Jefferies: "headline shock value is doing more work than the underlying facts."</li>
+        </ol>
+        <div class="callout"><b>Bull math (Jefferies upside $300):</b> 2027 EPS $8.00 × 37.5x. <b>UBS $230:</b> 2027E $8.20 × 28x. <b>Evercore $237.</b></div>
+      </div>
+      <div class="card bear">
+        <h3><span class="tag red">Bear case</span> Asset-light just became liability-heavy in a spread business</h3>
+        <p><strong>Who:</strong> Morgan Stanley ($91, Underweight), Bernstein ($151–153, Market-Perform), TD Cowen ($152, Hold), CFRA ($165, Hold), Goldman Sachs ($180, Neutral).</p>
+        <ol>
+          <li><strong>Insurance repricing is structural and asymmetric.</strong> Robinson pays &lt;1% of revenue for insurance vs ~5%+ at asset carriers. Underwriters are raising excess layers 30–50%, some brokers 3x–9x. Bernstein: $120M hit to 2027 operating income, −$0.78 EPS. Wolfe: −$0.35 per doubling.</li>
+          <li><strong>The spread gets squeezed from both sides.</strong> Small carriers push their premium inflation into buy rates; Robinson competes against self-insured asset carriers on sell rates and cannot pass it all through. Bernstein: a gross margin compression "that does not recover."</li>
+          <li><strong>Early-cycle margin pain is here now.</strong> NAST gross margin 13.1% (−170bp), 3Q26 estimates being cut (UBS 3Q26E $1.69 → $1.64), AGP per day decelerating +9%/+7%/+3% through the quarter (GS).</li>
+          <li><strong>Cost cuts are partly cyclical and have a commercial cost.</strong> Incentive comp is already pushing personnel to the high end; ex-executives report lost relationships and lower win rates; the company may need to rehire in a real upturn.</li>
+          <li><strong>The multiple should compress.</strong> TD Cowen: broker liability warrants a higher risk premium and narrows the historical broker premium over asset-based peers. GS and Wolfe both cut multiples. At 21x P/E the stock is fairly valued, not cheap.</li>
+        </ol>
+        <div class="callout" style="border-color:rgba(230,103,103,.4);background:linear-gradient(135deg,rgba(230,103,103,.1),transparent)"><b>Bear math (Jefferies downside $130):</b> 2027 EPS $7.20 × 18x. <b>Bernstein $151:</b> 2027E $7.05 × 21.5x. <b>TD Cowen $152:</b> $7.25 × 21x.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Where the two camps actually differ: a scorecard</h3>
+      <div class="tbl-scroll"><table class="tbl">
+        <tr><th style="text-align:left">Question</th><th style="text-align:left">Bull answer</th><th style="text-align:left">Bear answer</th><th style="text-align:left">What would settle it</th></tr>
+        <tr><td>Is the 60% productivity gain permanent?</td><td style="text-align:left;color:var(--muted)">Yes: AI agents, 10x quote capacity, no rehiring needed</td><td style="text-align:left;color:var(--muted)">Partly: incentive comp and rehiring return in an upturn</td><td style="text-align:left;color:var(--muted)">Personnel ÷ AGP falling toward 44% in 2027 while volumes grow</td></tr>
+        <tr><td>Net effect of Montgomery on EPS?</td><td style="text-align:left;color:var(--muted)">Positive: +$60M insurance offset by &gt;3pp NAST GP from share shift (UBS)</td><td style="text-align:left;color:var(--muted)">Negative: −$120M / −$0.78 (Bernstein), spread never recovers</td><td style="text-align:left;color:var(--muted)">2027 insurance renewals; NAST volume vs Cass in 4Q26–1H27</td></tr>
+        <tr><td>2027 EPS?</td><td style="text-align:left;color:var(--muted)">$7.70–8.20 (Jefferies, UBS)</td><td style="text-align:left;color:var(--muted)">$6.68–7.25 (Bernstein, TD Cowen)</td><td style="text-align:left;color:var(--muted)">Contract repricing in the 2026–27 bid season; NAST gross margin back above 14%</td></tr>
+        <tr><td>Right multiple?</td><td style="text-align:left;color:var(--muted)">28–30x on structural growth, positive revisions</td><td style="text-align:left;color:var(--muted)">21–23.5x, broker premium over truckers should narrow</td><td style="text-align:left;color:var(--muted)">Final judgment and appeal path in <i>Lipe</i>; other broker verdicts</td></tr>
+        <tr><td>Who wins share post-Montgomery?</td><td style="text-align:left;color:var(--muted)">Large brokers (Jefferies, DB, Wolfe channel checks)</td><td style="text-align:left;color:var(--muted)">Asset-based, self-insured carriers (Bernstein)</td><td style="text-align:left;color:var(--muted)">CHRW TL volume growth vs KNX/SNDR/JBHT brokerage and asset volumes</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RISKS ============ -->
+<section class="sec" id="risks">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Key risks</span><h2>Risk register</h2>
+    <p class="lede">Ranked by the product of likelihood and earnings impact as discussed across the source notes. Colour: red = high, orange = medium, green = lower.</p></div></div>
+    <div class="riskgrid">
+      <div class="risk high"><div class="h">Broker liability &amp; nuclear verdicts <span class="tag red">High</span></div><div class="p">Joint-and-several exposure to the full $604M if upheld; a wave of copycat suits post-Montgomery; 3–5 year state lookback windows mean reserves for past accidents. Appeals take 5–7 years so the overhang persists.</div></div>
+      <div class="risk high"><div class="h">Insurance cost inflation <span class="tag red">High</span></div><div class="p">Base case doubling from ~$60M to ~$120M; excess layers +30–50%, some brokers 3–9x. Every 100% increase is ~$50M pre-tax / $0.35 EPS (Wolfe). 2027 renewals are the catalyst.</div></div>
+      <div class="risk high"><div class="h">Contract-book margin squeeze <span class="tag red">High</span></div><div class="p">70% contract mix means spot spikes compress gross margin for 2–3 quarters. NAST GM 13.1% in 2Q26. A second leg up in spot rates before bids reprice would hit 3Q–4Q26.</div></div>
+      <div class="risk med"><div class="h">Second-year freight downturn <span class="tag orange">Medium</span></div><div class="p">UBS: year one of falling spot rates is fine (margins expand); a second year is "a meaningful headwind". Cass shipments −9.3% y/y in August 2026 show demand is still weak; the rate rally is supply-driven.</div></div>
+      <div class="risk med"><div class="h">Structural spread erosion <span class="tag orange">Medium</span></div><div class="p">Cleveland Research: transparency, shorter contracts and cost-cutting push mid-cycle net revenue margin from ~15% toward 10%. Carrier insurance inflation embedded in buy rates that cannot be passed on (Bernstein).</div></div>
+      <div class="risk med"><div class="h">Commercial capability loss <span class="tag orange">Medium</span></div><div class="p">Headcount −32% since 2022 included senior account managers. Automated quoting reportedly rigid; one customer's win rate fell 90% → 50%. Risk of losing enterprise allocations to relationship-driven rivals.</div></div>
+      <div class="risk med"><div class="h">Global Forwarding volatility &amp; tariffs <span class="tag orange">Medium</span></div><div class="p">Ocean AGP has swung ±50% y/y; GF AGP per day decelerated to +3% in June 2026; tariffs and de minimis changes can create air pockets in transpacific volume.</div></div>
+      <div class="risk med"><div class="h">Working-capital drag in an upturn <span class="tag orange">Medium</span></div><div class="p">Rising rates inflate receivables faster than payables. 2Q26 FCF was only $18M after a $507M AR build; 1H26 CFO $104M vs $334M a year earlier. Buybacks funded with debt (net debt 1.3x → 1.6x).</div></div>
+      <div class="risk low"><div class="h">Asset-based &amp; digital competition <span class="tag green">Lower</span></div><div class="p">JBHT/KNX/SNDR brokerage arms with owned capacity; RXO post-Coyote; Uber Freight. Mitigated by Convoy's collapse and consolidation to the top 5–10.</div></div>
+      <div class="risk low"><div class="h">AI disintermediation <span class="tag green">Lower / long-run</span></div><div class="p">Shippers could use commoditised AI to self-match freight (TD Cowen). Offset by Robinson's proprietary 37M-shipment data set and carrier network.</div></div>
+      <div class="risk low"><div class="h">Execution on AI in Global Forwarding <span class="tag green">Lower</span></div><div class="p">GF is in the "first inning". If productivity stalls, personnel guidance high-end becomes the run-rate and GS's downside case of cost pressure materialises.</div></div>
+      <div class="risk low"><div class="h">Governance / activist <span class="tag green">Lower</span></div><div class="p">Ancora's 2022 settlement seats have rolled off (Winship resigned Aug 2025; Maier not re-elected May 2025). Wolfe expects Board scrutiny on risk management and insurance after the verdict. Institutional ownership ~50%; insiders 1.2%.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT TO WATCH ============ -->
+<section class="sec" id="watch">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Monitoring</span><h2>What to watch, and the external indicators that lead Robinson's numbers</h2></div></div>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Weekly / monthly indicators</h3>
+        <ul>
+          <li><strong>DAT dry van spot vs contract ($/mile ex-fuel).</strong> Spot above contract = squeeze now, AGP later. Aug 2026: spot ~$2.25–2.32, contract ~$2.42.</li>
+          <li><strong>Cass Freight Index shipments &amp; expenditures.</strong> Aug 2026: shipments −9.3% y/y, expenditures +42% y/y. Robinson volume vs Cass = share.</li>
+          <li><strong>Tender rejection rates</strong> (SONAR OTRI) as the real-time gauge of capacity tightness.</li>
+          <li><strong>Class 8 truck orders</strong> (ACT/FTR). Aug 2026: ~16,800–18,200, +31–42% y/y as carriers pre-buy ahead of 2027 engine rules. New capacity arrives 6–12 months later and eventually loosens rates.</li>
+          <li><strong>Ocean spot indices</strong> (Drewry WCI, SCFI) and air cargo rates (TAC) for Global Forwarding.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Company KPIs each quarter</h3>
+        <ul>
+          <li>NAST TL volume growth vs Cass (the 13-quarter streak).</li>
+          <li>NAST gross margin % and TL AGP per shipment (recovery toward 14–15%).</li>
+          <li>LTL AGP per order: carriers have signalled rate resets for third-party freight (Bernstein).</li>
+          <li>Average headcount and personnel ÷ AGP.</li>
+          <li>Insurance &amp; claims expense line and any reserve additions.</li>
+          <li>Buyback pace ($2B authorisation) and net debt/EBITDA.</li>
+          <li>GF AGP per day monthly cadence (Apr +9%, May +7%, Jun +3%).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Catalysts calendar</h3>
+        <div class="timeline">
+          <div class="ev"><div class="d">Late Oct 2026</div><div class="t">3Q26 results</div><div class="x">Consensus ~$1.64–1.72 EPS. Watch NAST GM sequential improvement (UBS models 13.3%).</div></div>
+          <div class="ev red"><div class="d">TBD</div><div class="t">Final judgment in <i>Lipe</i></div><div class="x">Judge decides whether to enter the advisory verdict; Robinson appeals immediately. Any remittitur or reversal of the "borrowed employee" finding is the key legal variable.</div></div>
+          <div class="ev"><div class="d">Q4 2026 – Q1 2027</div><div class="t">Contract bid season</div><div class="x">Stephens models +10–15% ex-fuel contract increases. This is when the 70% contract book reprices.</div></div>
+          <div class="ev red"><div class="d">Early 2027</div><div class="t">Insurance renewals</div><div class="x">The first read on whether costs double (UBS) or worse (TD Cowen).</div></div>
+          <div class="ev"><div class="d">Jan 2027</div><div class="t">4Q26 results and 2027 framework</div><div class="x">Did 2026 land in $964M–$1.04B? First 2027 operating income target.</div></div>
+          <div class="ev"><div class="d">Ongoing</div><div class="t">FMCSA broker rules / legislation</div><div class="x">Clear federal standards for carrier selection would cap the liability tail (UBS).</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GLOSSARY ============ -->
+<section class="sec" id="glossary">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="kicker">Reference</span><h2>Glossary and source list</h2></div></div>
+    <div class="grid g2">
+      <div>
+        <details open><summary>AGP / net revenue / gross margin</summary><div class="body"><strong>Adjusted gross profit (AGP)</strong>, also called net revenue, is gross revenue minus purchased transportation and purchased products. It is the broker's real top line. <strong>Gross margin</strong> or <strong>net revenue margin</strong> is AGP ÷ gross revenue (13.1% NAST in 2Q26). <strong>Adjusted operating margin</strong> is operating income ÷ AGP (40.9% NAST), not ÷ gross revenue.</div></details>
+        <details><summary>Spot vs contract; DAT; RoadCheck</summary><div class="body"><strong>Spot</strong> = priced per load at today's market. <strong>Contract</strong> = annual bid with fixed lane rates. <strong>DAT</strong> is the largest load board; its dry van linehaul rate per mile (ex-fuel) is the industry's spot benchmark. <strong>RoadCheck</strong> is the annual CVSA inspection blitz each May/June that temporarily pulls capacity off the road and spikes spot rates.</div></details>
+        <details><summary>TL, LTL, drop trailer, cross-border</summary><div class="body"><strong>Truckload (TL)</strong>: a full trailer for one shipper. <strong>LTL</strong>: shared trailer through a carrier's terminal network, priced by freight class (NMFC). <strong>Drop trailer</strong>: broker/carrier leaves a trailer at the shipper's dock to be loaded later, so drivers do not wait. <strong>Cross-border</strong>: U.S.–Mexico freight transloaded at Laredo; requires customs and carrier hand-offs.</div></details>
+        <details><summary>3PL, 4PL, TMS, Navisphere</summary><div class="body"><strong>3PL</strong> arranges transport for a shipper. <strong>4PL</strong> (Robinson's TMC) manages the shipper's whole logistics function including other 3PLs. <strong>TMS</strong> = transportation management system software. <strong>Navisphere</strong> is Robinson's proprietary TMS and platform, launched 2012.</div></details>
+        <details><summary>Cass Freight Index, Class 8, tender rejections</summary><div class="body"><strong>Cass Freight Index</strong>: monthly shipments and expenditures compiled by Cass Information Systems from freight bills it pays. <strong>Class 8</strong>: heavy-duty tractors; orders lead capacity additions by 6–12 months. <strong>Tender rejection rate</strong>: share of contract loads carriers refuse; rising rejections mean spot is more lucrative than contract, i.e., a tight market.</div></details>
+        <details><summary>FAAAA, Montgomery, negligent selection, vicarious liability, joint-and-several</summary><div class="body"><strong>FAAAA</strong> (1994) preempts state laws "related to" motor-carrier prices, routes or services; brokers argued this barred state negligence suits. <strong>Montgomery v. Caribe Transport II</strong> (May 2026) held it does not. <strong>Negligent selection</strong>: the broker chose an unsafe carrier. <strong>Vicarious liability</strong>: the broker is treated as the driver's employer. <strong>Joint-and-several</strong>: any defendant can be made to pay the whole award.</div></details>
+        <details><summary>FMCSA, CSA, Satisfactory rating</summary><div class="body"><strong>FMCSA</strong> regulates U.S. trucking. Its <strong>CSA</strong> system scores carriers on safety alerts; a formal rating of <strong>Satisfactory</strong> is the highest. Lupus Superior held Satisfactory despite alerts, which is why the Lipe verdict alarms the industry.</div></details>
+      </div>
+      <div class="card">
+        <h3>Primary sources used</h3>
+        <ul style="font-size:13.5px">
+          <li>AlphaSense, <i>C.H. Robinson Company Primer</i>, 11 Sep 2026 (synthesising 10-K, 10-Q, press releases, investor presentations and 20+ broker notes incl. Deutsche Bank, Stephens, StoneX, TD Cowen, Wolfe, Evercore, JMP, CFRA, Cleveland, Mizuho, Susquehanna, and expert calls)</li>
+          <li>AlphaSense, <i>Bull and Bear Debates for C.H. Robinson</i>, 11 Sep 2026</li>
+          <li>Bernstein, <i>2Q26: Solid beat, outlook could be more challenging as truck market reprices risk</i>, 29 Jul 2026 (Vernon/Weiss) and Bernstein model</li>
+          <li>Goldman Sachs, <i>2Q26 EPS Ahead On Strong LTL AGP</i>, 29 Jul 2026; <i>HQ Visit with Senior Mgmt</i>, 4 Aug 2026 (Alliger/Stoddard/Tomczyk) and GS model</li>
+          <li>Jefferies, <i>2Q Beat and Solid Momentum Toward 2026 Targets Overshadowed by Litigation Fears</i>, 29 Jul 2026 (Moore/Hafling)</li>
+          <li>Morgan Stanley, <i>2Q26 Earnings Review</i>, 30 Jul 2026; <i>Freight Transportation Sector Update</i>, 10 Sep 2026, and MS model</li>
+          <li>UBS, <i>Stronger TL Rate Cycle + Montgomery Impact ⇒ Upside 2027 EPS</i>, 1 Jun 2026; <i>Solid 2Q Despite GM% Pressure</i>, 30 Jul 2026 (Wadewitz/Triano/DiMattia)</li>
+          <li>Web supplements: C.H. Robinson 10-K FY2025 and Exhibit 21 (sec.gov); DAT Freight &amp; Analytics (Aug 2026 rates); Cass Transportation Index (Aug 2026); ACT Research / FTR via FleetOwner &amp; CCJ (Aug 2026 Class 8 orders); CCJ, Overdrive, Heavy Duty Trucking (Lipe verdict coverage); Wikipedia (history); Interactive Brokers (price data).</li>
+        </ul>
+        <p style="font-size:12.5px;color:var(--dim)">Figures labelled "E" are broker estimates as of the note date. Where sources conflict (e.g., Bernstein's TTM-basis EPS vs company adjusted EPS) the company-reported adjusted figure is used and the difference footnoted. This dashboard is a research aid, not investment advice.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div><strong style="color:var(--text)">C.H. Robinson (CHRW) First-Principles Research Dashboard</strong> · Built 11 September 2026 from the broker research folder · Price data as of 11 Sep 2026 close.</div>
+      <div>Chart.js 4 · Leaflet 1.9 · TradingView widget · Esri dark-gray basemap · © respective research providers for underlying content.</div>
+    </div>
+  </div>
+</footer>
+<script>
+const MD={"years": [2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028], "rev": [5689.0, 6556.0, 7316.0, 8579.0, 7577.0, 9274.0, 10336.0, 11359.0, 12752.0, 13470.0, 13476.0, 13144.0, 14869.0, 16631.0, 15310.0, 16207.0, 23102.0, 24697.0, 17596.0, 17725.0, 16233.0, 18654.0, 20154.0, 21069.0], "agp": [880.0, 1083.0, 1244.0, 1375.0, 1381.0, 1468.0, 1633.0, 1718.0, 1839.0, 2009.0, 2268.0, 2278.0, 2368.0, 2705.0, 2586.0, 2412.0, 3152.0, 3593.0, 2605.0, 2765.0, 2729.0, 2866.0, 3036.0, 3173.0], "opinc": [326.0, 418.0, 527.0, 572.0, 584.0, 623.0, 690.0, 720.0, 690.0, 749.0, 858.0, 838.0, 775.0, 912.0, 784.0, 673.0, 1082.0, 1278.0, 553.0, 759.0, 834.0, 977.0, 1103.0, 1162.0], "eps": [1.16, 1.53, 1.96, 2.08, 2.13, 2.33, 2.6, 2.76, 2.68, 3.05, 3.51, 3.59, 3.35, 4.74, 4.15, 3.71, 6.29, 7.44, 3.26, 4.51, 5.09, 6.2, 7.3, 7.95], "pers": [427.0, 516.0, 568.0, 602.0, 598.0, 632.0, 699.0, 731.0, 827.0, 939.0, 1051.0, 1065.0, 1180.0, 1344.0, 1299.0, 1243.0, 1544.0, 1701.0, 1447.0, 1432.0, 1340.0, 1329.0, 1354.0, 1412.0], "nast_agp": [null, null, null, null, null, null, null, null, null, null, null, 1524.0, 1525.0, 1906.0, 1797.0, 1517.0, 1793.0, 2197.0, 1594.0, 1641.0, 1706.0, 1827.0, 1947.0, 2045.0], "gf_agp": [null, null, null, null, null, null, null, null, null, null, null, 398.0, 485.0, 544.0, 534.0, 629.0, 1074.0, 1083.0, 689.0, 803.0, 742.0, 751.0, 792.0, 822.0], "nast_om": [null, null, null, null, null, null, null, null, null, null, null, null, null, 0.431, 0.402, 0.335, 0.326, 0.384, 0.289, 0.334, 0.371, 0.412, 0.436, 0.431], "hc": [5776, 6768, 7332, 7961, 7347, 7628, 8353, 10929, 11676, 11521, 13004, 13638, 14710, 15213, 15604, 15110, 15731, 17717, 15971, 14354, 12712, 11339, 10432, 9597], "fcf": [88.0, 180.0, 61.0, 287.0, 286.0, 305.0, 377.0, 424.0, 307.0, 132.0, 674.0, 438.0, 323.0, 729.0, 765.0, 445.0, 24.0, 1522.0, 648.0, 435.0, 844.0, 827.0, 953.0, 890.0], "div": [51.0, 91.0, 125.0, 151.0, 163.0, 169.0, 195.0, 275.0, 220.0, 215.0, 236.0, 245.0, 258.0, 265.0, 278.0, 210.0, 277.0, 285.0, 292.0, 295.0, 301.0, 301.0, 302.0, 313.0], "buyback": [39.0, 85.0, 167.0, 201.0, 267.0, 151.0, 241.0, 245.0, 792.0, 165.0, 232.0, 168.0, 233.0, 320.0, 321.0, 233, 361.0, 1488.0, 89.0, 148.0, 294.0, 479.0, 640.0, 692.0], "dps": [null, 0.57, 0.76, 0.9, 0.97, 1.04, 1.2, 1.34, 1.4, 1.49, 1.57, 1.74, 1.81, 1.88, 2.01, 2.04, 2.12, 2.2, 2.44, 2.46, 2.49, 2.52, 2.56, 2.56], "pe": [25.8, 29.3, 25.8, 25.8, 24.6, 27.1, 28.2, 22.2, 22.0, 20.6, 19.5, 19.8, 21.6, 15.0, 17.1, 19.1, 11.3, 9.5, null, null, null, null, null, null], "vpc": {"q": ["1Q08", "2Q08", "3Q08", "4Q08", "1Q09", "2Q09", "3Q09", "4Q09", "1Q10", "2Q10", "3Q10", "4Q10", "1Q11", "2Q11", "3Q11", "4Q11", "1Q12", "2Q12", "3Q12", "4Q12", "1Q13", "2Q13", "3Q13", "4Q13", "1Q14", "2Q14", "3Q14", "4Q14", "1Q15", "2Q15", "3Q15", "4Q15", "1Q16", "2Q16", "3Q16", "4Q16", "1Q17", "2Q17", "3Q17", "4Q17", "1Q18", "2Q18", "3Q18", "4Q18", "1Q19", "2Q19", "3Q19", "4Q19", "1Q20", "2Q20", "3Q20", "4Q20", "1Q21", "2Q21", "3Q21", "4Q21", "1Q22", "2Q22", "3Q22", "4Q22", "1Q23", "2Q23", "3Q23", "4Q23", "1Q24", "2Q24", "3Q24", "4Q24", "1Q25", "2Q25", "3Q25", "4Q25", "1Q26", "2Q26"], "vol": [15.0, 11.0, 9.0, -4.0, -10.0, -5.0, 0, 13.0, 22.0, 18.0, 14.0, 9.0, 7.5, 3.5, 4.0, 5.0, 8.0, 10.0, 8.0, 8.0, 5.0, 7.0, 9.0, 6.0, 3.0, 3.0, 1.0, 3.0, 6.0, 7.0, 7.0, 5.0, 4.0, 3.0, 7.5, 10.0, 11.0, 8.5, 1.0, -1.5, -7.0, -5.0, -1.5, -2.5, 0.5, -2.5, -4.0, 0, 7.5, -4.5, 0.5, -3.5, -6.5, 6.0, 4.5, 6.0, 4.0, 2.0, 0.5, -4.0, -3.5, -6.5, -6.0, -1.5, -0.5, 1.5, -3.5, -6.5, -4.5, 0, 3.0, 3.0, -3.5, 0.5], "px": [-2.0, 0, 3.0, 0, -1.0, -5.0, -7.0, -6.0, -3.0, 5.0, 8.0, 8.0, 8.0, 6.0, 4.0, 3.0, 1.0, 1.0, 0, 1.0, 1.5, 1.0, 4.0, 3.5, 10.0, 10.0, 10.0, 12.0, 6.0, 3.0, 0, -3.0, -5.0, -7.5, -5.5, -3.5, -4.0, 0, 6.5, 15.0, 21.0, 20.5, 14.0, 1.5, -5.5, -11.5, -12.5, -11.0, -8.5, -5.5, 10.5, 29.0, 33.0, 42.0, 27.0, 18.5, 20.5, 1.5, -13.0, -21.0, -27.5, -23.0, -16.5, -13.5, -7.5, -2.0, 2.5, 6.0, 4.0, 3.5, -1.5, 2.5, 11.0, 25.5], "cost": [0, 2.0, 1.0, 2.0, -3.0, -10.0, -13.0, -4.0, 3.0, 11.0, 12.0, 8.0, 6.0, 4.0, 3.0, 4.0, 2.0, 3.0, 1.0, 2.0, 2.5, 1.0, 2.0, 5.0, 12.0, 9.0, 8.0, 11.0, 6.0, 2.5, -1.0, -5.0, -7.0, -8.0, -3.5, 0, -2.0, 4.0, 8.5, 14.5, 21.5, 19.5, 12.0, -1.0, -8.5, -14.5, -12.0, -7.5, -2.5, -2.0, 16.5, 32.5, 33.5, 47.5, 26.0, 18.0, 21.0, -5.0, -17.0, -24.0, -28.5, -19.0, -13.5, -10.5, -7.5, -3.5, -0.5, 4.0, 3.0, 3.5, -1.5, 2.5, 13.0, 29.0]}, "nast_gm_q": {"1Q22": 12.3, "2Q22": 15.1, "3Q22": 14.1, "4Q22": 14.1, "1Q23": 12.9, "2Q23": 13.0, "3Q23": 12.5, "4Q23": 12.7, "1Q24": 13.2, "2Q24": 14.0, "3Q24": 14.3, "4Q24": 14.4, "1Q25": 14.6, "2Q25": 14.8, "3Q25": 15.0, "4Q25": 14.6, "1Q26": 14.6, "2Q26": 13.1, "3Q26": 13.0, "4Q26": 13.0, "1Q27": 13.6, "2Q27": 12.6, "3Q27": 12.8, "4Q27": 13.1, "1Q28": 13.6, "2Q28": 12.6, "3Q28": 12.9, "4Q28": 13.2}, "gf_gm_q": {"1Q22": 14.7, "2Q22": 15.5, "3Q22": 16.4, "4Q22": 18.6, "1Q23": 22.5, "2Q23": 23.0, "3Q23": 23.6, "4Q23": 22.9, "1Q24": 21.0, "2Q24": 20.0, "3Q24": 20.6, "4Q24": 23.1, "1Q25": 23.8, "2Q25": 23.5, "3Q25": 24.4, "4Q25": 24.3, "1Q26": 24.4, "2Q26": 21.1, "3Q26": 22.2, "4Q26": 22.7, "1Q27": 23.8, "2Q27": 21.7, "3Q27": 23.0, "4Q27": 22.4, "1Q28": 23.7, "2Q28": 21.5, "3Q28": 22.8, "4Q28": 22.3}, "ebit_nr": {"FY2002": 32.4, "FY2003": 33.7, "FY2004": 33.7, "FY2005": 37.1, "FY2006": 38.6, "FY2007": 42.4, "FY2008": 41.6, "FY2009": 42.3, "FY2010": 42.4, "FY2011": 42.2, "FY2012": 41.9, "FY2013": 37.5, "FY2014": 37.3, "FY2015": 37.8, "FY2016": 36.8, "FY2017": 32.7, "FY2018": 33.7, "FY2019": 30.3, "FY2020": 27.9, "FY2021": 34.3}};
+</script>
+<!-- TradingView -->
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+/* ---------- helpers ---------- */
+const C={blue:'#3987e5',orange:'#d95926',aqua:'#199e70',yellow:'#c98500',magenta:'#d55181',green:'#008300',violet:'#9085e9',red:'#e66767',muted:'#9aa5b8',dim:'#6b7688',line:'#232b3a',text:'#e8ecf3'};
+Chart.defaults.color=C.muted;Chart.defaults.borderColor='rgba(255,255,255,.06)';Chart.defaults.font.family='Inter, system-ui, sans-serif';Chart.defaults.font.size=12;
+Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.plugins.legend.labels.boxHeight=10;Chart.defaults.plugins.legend.labels.usePointStyle=true;
+Chart.defaults.plugins.tooltip.backgroundColor='#1b2130';Chart.defaults.plugins.tooltip.borderColor='#2e384b';Chart.defaults.plugins.tooltip.borderWidth=1;Chart.defaults.plugins.tooltip.titleColor='#fff';Chart.defaults.plugins.tooltip.bodyColor='#e8ecf3';Chart.defaults.plugins.tooltip.padding=10;
+Chart.defaults.elements.line.borderWidth=2;Chart.defaults.elements.line.tension=.25;Chart.defaults.elements.point.radius=2.5;Chart.defaults.elements.point.hoverRadius=5;Chart.defaults.elements.bar.borderRadius=4;
+const fmtM=v=>v==null?'—':(Math.abs(v)>=1000?'$'+(v/1000).toFixed(v%1000===0?0:1)+'B':'$'+Math.round(v)+'M');
+const fmtPct=v=>v==null?'—':(v>0?'+':'')+v.toFixed(1)+'%';
+const money=(v,d=2)=>'$'+v.toFixed(d);
+const grid={color:'rgba(255,255,255,.05)'};
+const charts={};
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return null;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,cfg);return charts[id];}
+const yrIdx=y=>MD.years.indexOf(y);
+const slice=(arr,a,b)=>arr.slice(yrIdx(a),yrIdx(b)+1);
+const yrs=(a,b)=>MD.years.slice(yrIdx(a),yrIdx(b)+1).map(y=>y>=2026?y+'E':String(y));
+
+/* ---------- counters ---------- */
+function animateCounters(){
+  document.querySelectorAll('.kpi .v[data-count]').forEach(el=>{
+    const target=parseFloat(el.dataset.count),dec=parseInt(el.dataset.dec||'0'),pre=el.dataset.prefix||'',suf=el.dataset.suffix||'',isInt=el.dataset.format==='int';
+    const t0=performance.now(),dur=1400;
+    function step(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);const v=target*e;
+      el.textContent=pre+(isInt?Math.round(v).toLocaleString():v.toFixed(dec))+suf;if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);});
+}
+/* ---------- nav / progress ---------- */
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';});
+const secs=[...document.querySelectorAll('section[id]')];const navA=[...document.querySelectorAll('#navlinks a')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navA.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));const a=document.querySelector('#navlinks a.active');if(a)a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}})},{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(s=>io.observe(s));
+
+/* ---------- 1. Squeeze simulator ---------- */
+function squeeze(shock){
+  const q=['Q0','Q1','Q2','Q3','Q4','Q5','Q6'];const gm0=14.8;const sell0=100,buy0=sell0*(1-gm0/100);
+  const buyT=buy0*(1+shock/100);const sell=[sell0],buy=[buy0];const sellT=buyT/(1-gm0/100);
+  for(let i=1;i<7;i++){buy.push(i===1?buyT:buyT);sell.push(sell[i-1]+(sellT-sell[i-1])*0.30);}
+  const gm=sell.map((s,i)=>(s-buy[i])/s*100);
+  return {q,sell,buy,gm};
+}
+function drawSqueeze(){
+  const shock=parseInt(document.getElementById('sq').value);document.getElementById('sqv').textContent=(shock>0?'+':'')+shock+'%';
+  const d=squeeze(shock);
+  mk('chSqueeze',{type:'line',data:{labels:d.q,datasets:[
+    {label:'Sell rate (contract, indexed)',data:d.sell,borderColor:C.blue,yAxisID:'y'},
+    {label:'Buy rate (spot cost, indexed)',data:d.buy,borderColor:C.orange,yAxisID:'y'},
+    {label:'Gross margin %',data:d.gm,borderColor:C.aqua,borderDash:[5,4],yAxisID:'y2'}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'Rate index (Q0 sell = 100)'}},y2:{position:'right',grid:{display:false},title:{display:true,text:'Gross margin %'},suggestedMin:0,suggestedMax:25}},plugins:{legend:{position:'bottom'}}}});
+}
+document.getElementById('sq').addEventListener('input',drawSqueeze);drawSqueeze();
+
+/* ---------- 2. AGP mix ---------- */
+mk('chAgpMix',{type:'doughnut',data:{labels:['Truckload','LTL','Ocean','Air','Customs','Other logistics','Fresh & other'],datasets:[{data:[1052,610,433,137,133,224,140],backgroundColor:[C.blue,'#6da7ec',C.aqua,'#5fd49f',C.violet,C.yellow,C.magenta],borderColor:'#151a24',borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>` ${c.label}: $${c.raw}M (${(c.raw/2729*100).toFixed(0)}%)`}}}}});
+
+/* ---------- 3. Segments ---------- */
+mk('chSegAgp',{type:'bar',data:{labels:['NAST','Global Forwarding','Robinson Fresh','Managed Solutions'],datasets:[{label:'2Q25 AGP $M',data:[432.2,187.6,44.4,29.0],backgroundColor:'rgba(57,135,229,.35)'},{label:'2Q26 AGP $M',data:[469.4,188.8,47.3,32.5],backgroundColor:C.blue}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,title:{display:true,text:'$M per quarter'}},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{afterBody:(items)=>{const i=items[0].dataIndex;const a=[432.2,187.6,44.4,29.0][i],b=[469.4,188.8,47.3,32.5][i];return 'YoY: '+fmtPct((b/a-1)*100)+'  ·  annualised ≈ '+fmtM(b*4);}}}}}});
+mk('chSegMargin',{type:'bar',data:{labels:['2023','2024','2025','1Q26','2Q26','Mid-cycle target'],datasets:[
+  {label:'NAST',data:[28.9,33.4,37.1,37.4,40.9,40],backgroundColor:C.blue},
+  {label:'Global Forwarding',data:[22.3,27.9,26.9,19.5,33.4,30],backgroundColor:C.aqua}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,title:{display:true,text:'Operating income % of AGP'},suggestedMax:50},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}%`}}}}});
+
+/* ---------- 4. Footprint map ---------- */
+(function(){
+  const map=L.map('map',{scrollWheelZoom:false,worldCopyJump:true}).setView([25,10],2);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri, HERE, Garmin, OpenStreetMap contributors',maxZoom:16}).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,pane:'shadowPane',opacity:.8}).addTo(map);
+  const hubs=L.layerGroup(),lanes=L.layerGroup(),region=L.layerGroup();
+  const H=[
+    ['Eden Prairie, MN','HQ. Owned campus; 14701 Charlson Rd. Corporate, tech, shared services.',44.85,-93.47,'blue',9],
+    ['Chicago, IL','Largest NAST branch cluster; Midwest freight hub.',41.88,-87.63,'blue',7],
+    ['Kansas City, MO','Freightquote (LTL digital brokerage) home base.',39.10,-94.58,'blue',6],
+    ['Laredo, TX','Cross-border facility: 154 dock doors, 700 trailers; >1M cross-border shipments/yr; ~10% U.S.–Mexico share.',27.51,-99.51,'blue',8],
+    ['South Texas produce centre','GFSI-certified Robinson Fresh cross-border produce logistics centre (May 2026).',26.2,-98.2,'blue',5],
+    ['Monterrey, MX','Mexico HQ; automotive cluster; NAST + GF + TMC Mexico entities.',25.69,-100.32,'blue',7],
+    ['Mexico City','Robinson Fresh de Mexico; Global Forwarding Mexico.',19.43,-99.13,'blue',5],
+    ['Toronto','C.H. Robinson Company (Canada); Milgram customs brokerage (Montreal).',43.65,-79.38,'blue',6],
+    ['Vancouver','Canada west-coast gateway.',49.28,-123.12,'blue',4],
+    ['Atlanta','Southeast NAST hub.',33.75,-84.39,'blue',5],
+    ['Phoenix','Southwest NAST hub.',33.45,-112.07,'blue',5],
+    ['Amsterdam','European Global Forwarding gateway; C.H. Robinson Europe B.V.',52.37,4.9,'green',7],
+    ['Cork, Ireland','Technology centre; Irish finance & brokerage entities.',51.9,-8.47,'violet',6],
+    ['Warsaw (divested)','Former Europe Surface Transportation HQ (ex-Apreo); sold to sennder Feb 2025.',52.23,21.01,'orange',6],
+    ['London','UK forwarding & customs.',51.5,-0.12,'green',4],
+    ['Frankfurt','C.H. Robinson Worldwide GmbH.',50.11,8.68,'green',4],
+    ['Milan / Madrid / Paris','Southern Europe forwarding offices.',44.5,6.0,'green',3],
+    ['Dubai','C.H. Robinson Freight Services Gulf / Middle East DMCC.',25.2,55.27,'green',5],
+    ['Nairobi','Freight Services Africa.',-1.29,36.82,'green',3],
+    ['Mumbai','India forwarding (opened 2009).',19.08,72.88,'green',5],
+    ['Colombo','Sri Lanka forwarding.',6.93,79.85,'green',3],
+    ['Shanghai','Asia gateway; Freight Services (China) + Dalian logistics.',31.23,121.47,'green',9],
+    ['Hong Kong','Asia gateway; CHR Holdings HK.',22.32,114.17,'green',7],
+    ['Singapore','Asia-Pacific regional management hub.',1.35,103.82,'green',8],
+    ['Seoul','Freight Services Korea.',37.57,126.98,'green',4],
+    ['Taipei','Freight Services Taiwan.',25.03,121.57,'green',4],
+    ['Ho Chi Minh City','Vietnam forwarding (sourcing shift beneficiary).',10.82,106.63,'green',5],
+    ['Bangkok','Freight Services Thailand.',13.76,100.5,'green',4],
+    ['Kuala Lumpur','Freight Services Malaysia.',3.14,101.69,'green',4],
+    ['Manila','C.H. Robinson Philippines.',14.6,120.98,'green',4],
+    ['Jakarta','PT CH Robinson Global Forwarding Indonesia.',-6.2,106.85,'green',4],
+    ['Sydney / Melbourne','APC Logistics (2016) Oceania network; 7 coastal offices.',-33.87,151.21,'green',6],
+    ['Auckland','C.H. Robinson Worldwide (NZ).',-36.85,174.76,'green',3],
+    ['São Paulo','Logistica do Brasil.',-23.55,-46.63,'green',5],
+    ['Santiago / Lima / Bogotá','Chile, Peru, Colombia entities.',-12.05,-77.04,'green',4],
+  ];
+  const col={blue:'#3987e5',green:'#199e70',violet:'#9085e9',orange:'#d95926'};
+  H.forEach(h=>{L.circleMarker([h[2],h[3]],{radius:h[5],color:col[h[4]],fillColor:col[h[4]],fillOpacity:.75,weight:1.5}).bindPopup(`<b>${h[0]}</b><br>${h[1]}`).addTo(hubs);});
+  const lane=(a,b,label,w)=>L.polyline([a,b],{color:'#5fd49f',weight:w,opacity:.55,dashArray:'6 6'}).bindPopup(label).addTo(lanes);
+  lane([31.23,121.47],[33.74,-118.27],'Transpacific eastbound: Shanghai → Los Angeles/Long Beach. SCFI Shanghai–WC US $7,242/FEU, +231% y/y (MS, Sep 2026). Asia–N. America volumes flat y/y in June 2026.',3);
+  lane([22.32,114.17],[40.68,-74.02],'Asia → US East Coast via Suez/Panama. SCFI Shanghai–EC US $10,324/FEU, +236% y/y.',2.5);
+  lane([31.23,121.47],[51.95,4.1],'Asia → Europe (Shanghai → Rotterdam/Amsterdam). SCFI Shanghai–Europe $2,643/TEU, +101% y/y; Asia–Europe volumes +17% in June.',2);
+  lane([1.35,103.82],[25.2,55.27],'Asia → Middle East / India sub-continent lanes.',1.5);
+  lane([25.69,-100.32],[27.51,-99.51],'U.S.–Mexico cross-border via Laredo: Robinson\'s highest-growth corridor.',4);
+  lane([-23.55,-46.63],[25.77,-80.19],'Latin America → Miami air & ocean (Robinson Fresh produce, forwarding).',1.5);
+  lane([52.37,4.9],[41.88,-87.63],'Transatlantic air & ocean; Amsterdam gateway.',1.5);
+  const R=[['North America',8753,40,-97],['Asia / Middle East',1442,20,105],['Europe',1083,50,12],['Oceania',331,-30,140],['South America',246,-18,-58]];
+  R.forEach(r=>{L.circleMarker([r[2],r[3]],{radius:Math.sqrt(r[1])/3.2,color:'#3987e5',fillColor:'#3987e5',fillOpacity:.22,weight:1}).bindPopup(`<b>${r[0]}</b><br>${r[1].toLocaleString()} employees (31 Dec 2025)<br>${(r[1]/11855*100).toFixed(0)}% of total`).addTo(region);});
+  hubs.addTo(map);lanes.addTo(map);region.addTo(map);
+  document.querySelectorAll('[data-layer]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-layer]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const l=b.dataset.layer;[hubs,lanes,region].forEach(g=>map.removeLayer(g));if(l==='all'){hubs.addTo(map);lanes.addTo(map);region.addTo(map);}if(l==='hubs')hubs.addTo(map);if(l==='lanes'){lanes.addTo(map);hubs.addTo(map);}if(l==='region')region.addTo(map);}));
+  setTimeout(()=>map.invalidateSize(),500);
+})();
+mk('chRegion',{type:'bar',data:{labels:['N. America','Asia/Mid-East','Europe','Oceania','S. America'],datasets:[{data:[8753,1442,1083,331,246],backgroundColor:[C.blue,C.aqua,C.violet,C.yellow,C.magenta]}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{grid,title:{display:true,text:'Employees'}},y:{grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw.toLocaleString()} (${(c.raw/11855*100).toFixed(0)}%)`}}}}});
+
+/* ---------- 5. Drivers ---------- */
+(function(){
+  const ys=yrs(2015,2028);const om=slice(MD.opinc,2015,2028).map((v,i)=>v/slice(MD.agp,2015,2028)[i]*100);
+  mk('chLeverage',{type:'bar',data:{labels:ys,datasets:[{label:'Adj. operating income % of AGP',data:om.map(v=>+v.toFixed(1)),backgroundColor:ys.map(l=>l.includes('E')?'rgba(57,135,229,.4)':C.blue)}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,suggestedMin:15,suggestedMax:45},x:{grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw}% of AGP`}}}}});
+  const pp=slice(MD.pers,2015,2028).map((v,i)=>v/slice(MD.agp,2015,2028)[i]*100);
+  mk('chPersonnel',{type:'line',data:{labels:ys,datasets:[{label:'Personnel expense % of AGP',data:pp.map(v=>+v.toFixed(1)),borderColor:C.orange,backgroundColor:'rgba(217,89,38,.15)',fill:true,segment:{borderDash:ctx=>ctx.p0DataIndex>=ys.findIndex(l=>l.includes('E'))-1?[5,4]:undefined}}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,suggestedMin:40,suggestedMax:65},x:{grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw}% of AGP`}}}}});
+})();
+
+/* ---------- 6. Lean AI headcount ---------- */
+mk('chHeadcount',{type:'bar',data:{labels:yrs(2015,2028),datasets:[
+  {type:'bar',label:'Average headcount (Bernstein model)',data:slice(MD.hc,2015,2028),backgroundColor:yrs(2015,2028).map(l=>l.includes('E')?'rgba(57,135,229,.35)':C.blue),yAxisID:'y'},
+  {type:'line',label:'Shipments handled (M, approx.)',data:[null,null,null,null,null,null,37,37,37,37,37,37.5,38.5,39.5],borderColor:C.aqua,yAxisID:'y2',pointRadius:3}]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'Employees'}},y2:{position:'right',grid:{display:false},suggestedMin:0,suggestedMax:45,title:{display:true,text:'Shipments (M)'}},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'}}}});
+
+/* ---------- 7. Share vs Cass ---------- */
+mk('chShare',{type:'bar',data:{labels:['2Q23*','3Q23*','4Q23*','1Q24*','2Q24*','3Q24*','4Q24','1Q25','2Q25','3Q25','4Q25','1Q26','2Q26'],datasets:[
+  {label:'CHRW NAST truckload volume y/y %',data:[-6.5,-6,-1.5,-0.5,1.5,-3.5,-6.5,-4.5,1.5,3,3,-3.5,0.5],backgroundColor:C.blue},
+  {label:'Cass Freight Shipments Index y/y %',data:[-9,-8,-6,-5,-4,-5,-7.6,-6.2,-4,-3,-7.6,-6.2,-3.3],backgroundColor:'rgba(217,89,38,.75)'}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,title:{display:true,text:'% y/y'}},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmtPct(c.raw)}`}}}}});
+
+/* ---------- 8. Peers & market ---------- */
+mk('chPeers',{type:'bar',data:{labels:['Revenue growth y/y %','Brokerage volume y/y %','Gross (net revenue) margin %'],datasets:[{label:'C.H. Robinson',data:[19.3,1.5,15.0],backgroundColor:C.blue},{label:'RXO',data:[25,2,11.9],backgroundColor:C.orange}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'}}}});
+mk('chMarket',{type:'doughnut',data:{labels:['C.H. Robinson ~14–15%','TQL ~9%','RXO ~5%','Other mid-tier brokers ~31%','Brokers <$1B revenue ~40%'],datasets:[{data:[14.5,9,5,31.5,40],backgroundColor:[C.blue,C.aqua,C.orange,'#2e384b','#1b2130'],borderColor:'#151a24',borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right'}}}});
+
+/* ---------- 9. Verdict & GF ---------- */
+mk('chVerdict',{type:'bar',data:{labels:['(a) Several liability only','(b) Joint & several, full $604M','(c) Reduced / overturned'],datasets:[
+  {label:'Covered by insurance ($M)',data:[135,135,50],backgroundColor:C.aqua,stack:'s'},
+  {label:'Self-insured retention ($M)',data:[4,10,10],backgroundColor:C.yellow,stack:'s'},
+  {label:'Funded from cash ($M)',data:[0,459,0],backgroundColor:C.red,stack:'s'}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{grid,stacked:true,title:{display:true,text:'$M'}},y:{grid:{display:false},stacked:true}},plugins:{legend:{position:'bottom'}}}});
+mk('chGF',{type:'doughnut',data:{labels:['Ocean','Air','Customs','Other'],datasets:[{data:[105.0,42.3,31.8,9.7],backgroundColor:[C.aqua,'#5fd49f',C.violet,'#2e384b'],borderColor:'#151a24',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right'}}}});
+
+/* ---------- 10. Rate cycle ---------- */
+(function(){
+  const L=['Jan-22','Apr-22','Jul-22','Oct-22','Jan-23','Apr-23','Jul-23','Oct-23','Jan-24','Apr-24','Jul-24','Oct-24','Jan-25','Apr-25','Jul-25','Oct-25','Jan-26','Apr-26','May-26','Jun-26','Jul-26','Aug-26'];
+  const spot=[2.65,2.35,2.05,1.95,1.80,1.70,1.65,1.60,1.68,1.62,1.65,1.70,1.78,1.72,1.80,1.85,1.95,1.85,1.80,2.05,2.30,2.28];
+  const contract=[2.80,2.85,2.75,2.60,2.45,2.30,2.20,2.10,2.05,2.02,2.00,2.00,2.02,2.02,2.02,2.05,2.10,2.15,2.20,2.28,2.38,2.42];
+  mk('chRates',{type:'line',data:{labels:L,datasets:[{label:'Dry van spot linehaul $/mi (ex-fuel)',data:spot,borderColor:C.orange,pointRadius:L.map((l,i)=>i>=17?4:0)},{label:'Dry van contract $/mi (ex-fuel)',data:contract,borderColor:C.blue,pointRadius:L.map((l,i)=>i>=20?4:0)}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'$ per mile'},suggestedMin:1.4},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.raw.toFixed(2)}${c.dataIndex<17?' (approx.)':''}`}}}}});
+  const V=MD.vpc;
+  mk('chPxCost',{type:'line',data:{labels:V.q,datasets:[
+    {label:'TL price per mile y/y %',data:V.px,borderColor:C.blue,pointRadius:0},
+    {label:'TL cost per mile y/y %',data:V.cost,borderColor:C.orange,pointRadius:0},
+    {type:'bar',label:'TL volume y/y %',data:V.vol,backgroundColor:'rgba(25,158,112,.45)',borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'% year over year'}},x:{grid:{display:false},ticks:{maxTicksLimit:19}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw==null?'—':fmtPct(c.raw)}`}}}}});
+  const ys=yrs(2015,2028);
+  mk('chCycleEps',{type:'bar',data:{labels:ys,datasets:[
+    {label:'Adjusted EPS (GS actuals / GS estimates)',data:slice(MD.eps,2015,2028),backgroundColor:ys.map(l=>l.includes('E')?'rgba(57,135,229,.4)':C.blue)},
+    {type:'line',label:'UBS estimate',data:[...Array(11).fill(null),6.22,8.20,9.10],borderColor:C.aqua,pointRadius:4,borderDash:[4,4]},
+    {type:'line',label:'Jefferies estimate',data:[...Array(11).fill(null),6.10,7.70,null],borderColor:C.violet,pointRadius:4,borderDash:[4,4]},
+    {type:'line',label:'Morgan Stanley estimate',data:[...Array(11).fill(null),5.73,6.07,6.27],borderColor:C.red,pointRadius:4,borderDash:[4,4]}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'$ per share'}},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'}}}});
+})();
+
+/* ---------- 11. Financials ---------- */
+(function(){
+  const notes={rev:'Gross revenue ($M), FY2005–FY2028E. Peaked at $24.7B in 2022 on pandemic-era rates; 2025 down 8% on the Europe Surface divestiture and lower ocean pricing. 2026E–28E per Goldman Sachs. Bernstein $18.4B/$19.0B/$19.2B, MS $18.7B/$19.6B/$20.2B for 2026–28.',
+    agp:'Adjusted gross profit ($M). The spread grew roughly 6% a year from 2005 to 2019, spiked to $3.6B in 2022, and has been ~$2.7B since. Bulls need 2027 AGP of $3.0–3.2B (GS $3.04B, MS $3.07B, Jefferies $3.14B); Bernstein has only $2.87B.',
+    opinc:'Adjusted operating income ($M). 2023 trough $553M; 2025 $834M; guidance 2026 $964M–$1.04B. GS 2026E $977M, 2027E $1,103M. Note the 2018 peak ($912M) was on $2.7B of AGP and 15,200 heads; 2026E is on $2.87B of AGP and ~11,300 heads.',
+    eps:'Adjusted diluted EPS. 2022 peak $7.44; 2023 trough $3.26. GS 2026–28E $6.20/$7.30/$7.95. Range of Street 2027E: MS $6.07, Bernstein $7.05, GS $7.30, TD Cowen $7.25, Jefferies $7.70, UBS $8.20.',
+    gm:'AGP as % of gross revenue (net revenue margin). Drifted from ~17% (2015–16) to ~15% as spot rates rose and brokerage got more competitive; 16.8% in 2025 was a downturn high; 2Q26 fell to 15.0% on the spot squeeze. Cleveland Research warns mid-cycle could settle toward 10% long-term.',
+    om:'Adjusted operating income as % of AGP (the "adjusted operating margin" management targets). Fell from ~42% (2009–12) to 21% in 2023 as headcount grew faster than AGP; back to 31% in 2025, 35.7% in 2Q26, GS 2027E ~36%. Long-run GS EBIT/net revenue series: 32% (2002) → 42% (2010) → 28% (2020).',
+    hc:'Average headcount (Bernstein model). 5,776 (2005) → 17,717 (2022) → 12,712 (2025) → Bernstein 9,597 by 2028E. Bernstein\'s bear case oddly assumes the deepest cuts; MS grows headcount from 2026. Volume has been ~37M shipments since 2021.'};
+  const cfg={rev:{d:MD.rev,c:C.blue,l:'Gross revenue $M'},agp:{d:MD.agp,c:C.aqua,l:'Adjusted gross profit $M'},opinc:{d:MD.opinc,c:C.violet,l:'Adjusted operating income $M'},eps:{d:MD.eps,c:C.blue,l:'Adjusted EPS $'},
+    gm:{d:MD.agp.map((v,i)=>+(v/MD.rev[i]*100).toFixed(1)),c:C.orange,l:'AGP margin %'},om:{d:MD.opinc.map((v,i)=>+(v/MD.agp[i]*100).toFixed(1)),c:C.violet,l:'Operating income % of AGP'},hc:{d:MD.hc,c:C.yellow,l:'Average headcount'}};
+  function draw(m){const k=cfg[m];const labels=MD.years.map(y=>y>=2026?y+'E':String(y));
+    mk('chFin',{type:(m==='gm'||m==='om')?'line':'bar',data:{labels,datasets:[{label:k.l,data:k.d,backgroundColor:labels.map(l=>l.includes('E')?k.c+'55':k.c),borderColor:k.c,fill:(m==='gm'||m==='om')?{target:'origin',above:k.c+'22'}:false,pointRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,beginAtZero:!(m==='gm'||m==='om'||m==='hc')},x:{grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+(m==='eps'?money(c.raw):m==='gm'||m==='om'?c.raw+'%':m==='hc'?c.raw.toLocaleString():fmtM(c.raw))}}}}});
+    document.getElementById('finNote').textContent=notes[m];}
+  document.querySelectorAll('#finCtrl .btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#finCtrl .btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');draw(b.dataset.m);}));
+  draw('rev');
+  /* quarterly (Jefferies) */
+  const Q=['1Q25','2Q25','3Q25','4Q25','1Q26','2Q26','3Q26E','4Q26E','1Q27E','2Q27E','3Q27E','4Q27E'];
+  const J={nast:[418.3,432.2,444.1,411.6,431.1,469.4,486.0,466.9,490.6,528.9,544.0,519.7],gf:[184.6,187.6,191.8,178.0,162.3,188.8,195.5,184.5,179.7,189.7,196.1,184.4],fresh:[37.7,44.4,40.2,38.9,37.5,47.3,44.9,43.0,43.6,49.4,48.6,45.9],mgd:[27.8,29.0,30.0,28.6,29.6,32.5,29.0,28.0,28.0,29.0,29.0,29.0],
+    nop:[143.7,164.7,174.2,149.9,161.2,192.0,195.8,184.9,199.7,248.0,262.8,240.1],gop:[42.9,53.9,57.6,45.5,34.2,63.1,68.0,57.0,54.3,56.9,62.8,55.9],oop:[-1.1,1.7,-1.1,2.0,0.5,8.1,-0.1,1.6,-0.3,7.7,0.8,1.7]};
+  function drawQ(m){let ds;let opt={responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,stacked:m!=='margin',title:{display:true,text:m==='margin'?'% of AGP':'$M'}},x:{grid:{display:false},stacked:m!=='margin'}},plugins:{legend:{position:'bottom'}}};
+    if(m==='agp')ds=[{label:'NAST',data:J.nast,backgroundColor:C.blue},{label:'Global Forwarding',data:J.gf,backgroundColor:C.aqua},{label:'Robinson Fresh',data:J.fresh,backgroundColor:C.magenta},{label:'Managed Solutions',data:J.mgd,backgroundColor:C.violet}];
+    else if(m==='op')ds=[{label:'NAST',data:J.nop,backgroundColor:C.blue},{label:'Global Forwarding',data:J.gop,backgroundColor:C.aqua},{label:'All Other & Corporate',data:J.oop,backgroundColor:C.violet}];
+    else ds=[{label:'NAST margin',data:J.nop.map((v,i)=>+(v/J.nast[i]*100).toFixed(1)),borderColor:C.blue,type:'line'},{label:'GF margin',data:J.gop.map((v,i)=>+(v/J.gf[i]*100).toFixed(1)),borderColor:C.aqua,type:'line'},{label:'NAST target 40%',data:Q.map(()=>40),borderColor:'rgba(57,135,229,.4)',borderDash:[4,4],pointRadius:0,type:'line'},{label:'GF target 30%',data:Q.map(()=>30),borderColor:'rgba(25,158,112,.4)',borderDash:[4,4],pointRadius:0,type:'line'}];
+    mk('chQtr',{type:m==='margin'?'line':'bar',data:{labels:Q,datasets:ds},options:opt});}
+  document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-q]').forEach(x=>x.classList.remove('active'));b.classList.add('active');drawQ(b.dataset.q);}));
+  drawQ('agp');
+  const ys=yrs(2015,2027);
+  mk('chCash',{type:'bar',data:{labels:ys,datasets:[
+    {type:'line',label:'Free cash flow',data:slice(MD.fcf,2015,2027),borderColor:C.aqua,pointRadius:3},
+    {label:'Dividends',data:slice(MD.div,2015,2027),backgroundColor:C.blue,stack:'r'},
+    {label:'Buybacks',data:slice(MD.buyback,2015,2027),backgroundColor:C.violet,stack:'r'}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,stacked:true,title:{display:true,text:'$M'}},x:{grid:{display:false},stacked:true}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmtM(c.raw)}`}}}}});
+})();
+
+/* ---------- 12. Sensitivity ---------- */
+(function(){
+  const ids=['vol','gm','px','gf','hc','cph','ins','pe'];const g=id=>parseFloat(document.getElementById('s_'+id).value);
+  const fmt={vol:v=>(v>0?'+':'')+v+'%',gm:v=>v.toFixed(1)+'%',px:v=>(v>0?'+':'')+v+'%',gf:v=>'$'+v+'M',hc:v=>v.toLocaleString(),cph:v=>'$'+v+'k',ins:v=>'$'+v+'M',pe:v=>v+'x'};
+  function model(p){const nrev=13760*(1+p.vol/100)*(1+p.px/100);const nagp=nrev*p.gm/100;const agp=nagp+p.gf+302;const pers=p.hc*p.cph/1000;const sga=510+p.ins;const oi=agp-pers-sga;const ni=(oi-60)*(1-0.19);const eps=ni/118.5;return{nrev,nagp,agp,pers,sga,oi,om:oi/agp*100,ni,eps,px:eps*p.pe};}
+  function read(){const p={};ids.forEach(i=>p[i]=g(i));return p;}
+  function render(){const p=read();ids.forEach(i=>document.getElementById('s_'+i+'_v').textContent=fmt[i](p[i]));const m=model(p);
+    document.getElementById('o_eps').textContent=money(m.eps);document.getElementById('o_eps').style.color=m.eps>=7.7?'#5fd49f':m.eps<6.5?'#f09a9a':'#e8ecf3';
+    document.getElementById('o_nrev').textContent=fmtM(m.nrev);document.getElementById('o_nagp').textContent=fmtM(m.nagp);document.getElementById('o_agp').textContent=fmtM(m.agp);document.getElementById('o_pers').textContent=fmtM(m.pers);document.getElementById('o_sga').textContent=fmtM(m.sga);document.getElementById('o_oi').textContent=fmtM(m.oi);document.getElementById('o_om').textContent=m.om.toFixed(1)+'%';document.getElementById('o_ni').textContent=fmtM(m.ni);document.getElementById('o_px').textContent=money(m.px,0);const up=(m.px/152.42-1)*100;const e=document.getElementById('o_up');e.textContent=fmtPct(up);e.style.color=up>=0?'#5fd49f':'#f09a9a';}
+  ids.forEach(i=>document.getElementById('s_'+i).addEventListener('input',render));
+  const presets={base:{vol:3,gm:14.0,px:5,gf:750,hc:11000,cph:125,ins:60,pe:24},ubs:{vol:3,gm:14.5,px:9,gf:793,hc:10800,cph:124,ins:120,pe:28},bern:{vol:1,gm:13.0,px:4,gf:685,hc:10400,cph:118,ins:180,pe:21.5},ms:{vol:0,gm:13.2,px:3,gf:720,hc:11800,cph:126,ins:120,pe:17},squeeze:{vol:-2,gm:12.0,px:15,gf:730,hc:11000,cph:125,ins:90,pe:21}};
+  document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=presets[b.dataset.preset];ids.forEach(i=>document.getElementById('s_'+i).value=p[i]);render();}));
+  render();
+  const base=presets.base;const be=model(base).eps;
+  const levers=[['Gross margin 12.5→15.0%','gm',12.5,15.0],['Insurance $180M→$60M','ins',180,60],['Heads 12.0k→10.0k','hc',12000,10000],['GF AGP $685→800M','gf',685,800],['Volume −2%→+6%','vol',-2,6],['Price −5%→+15%','px',-5,15],['Cost/head $135k→$115k','cph',135,115]];
+  const lo=[],hi=[];levers.forEach(l=>{const a={...base,[l[1]]:l[2]},b={...base,[l[1]]:l[3]};lo.push(+(model(a).eps-be).toFixed(2));hi.push(+(model(b).eps-be).toFixed(2));});
+  mk('chTornado',{type:'bar',data:{labels:levers.map(l=>l[0]),datasets:[{label:'Bear value',data:lo,backgroundColor:C.red},{label:'Bull value',data:hi,backgroundColor:C.aqua}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{left:8}},scales:{x:{grid,stacked:true,title:{display:true,text:'Change in 2027E EPS vs base $'+be.toFixed(2)}},y:{grid:{display:false},stacked:true}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw>0?'+':''}$${c.raw.toFixed(2)}`}}}}});
+})();
+
+/* ---------- 13. Valuation ---------- */
+(function(){
+  try{new TradingView.widget({autosize:true,symbol:'NASDAQ:CHRW',interval:'W',timezone:'Etc/UTC',theme:'dark',style:'1',locale:'en',toolbar_bg:'#151a24',enable_publishing:false,hide_top_toolbar:false,save_image:false,container_id:'tv_chart',backgroundColor:'#151a24',gridColor:'rgba(255,255,255,0.05)'});}catch(e){document.getElementById('tv_chart').innerHTML='<div style="padding:20px;color:#9aa5b8">TradingView widget unavailable.</div>';}
+  const PT=[['Evercore',237,'Outperform'],['JMP',235,'Mkt Outperform'],['UBS',230,'Buy'],['Susquehanna',226,'Positive'],['Jefferies',220,'Buy'],['Deutsche Bank',220,'Buy'],['Stephens',215,'Overweight'],['StoneX',205,'Buy'],['Wolfe',196,'Outperform'],['Goldman Sachs',180,'Neutral'],['CFRA',165,'Hold'],['TD Cowen',152,'Hold'],['Bernstein',151,'Market-Perform'],['Morgan Stanley',91,'Underweight']];
+  mk('chPT',{type:'bar',data:{labels:PT.map(p=>p[0]),datasets:[{label:'Price target $',data:PT.map(p=>p[1]),backgroundColor:PT.map(p=>/Buy|Outperform|Positive|Overweight/.test(p[2])?C.aqua:/Neutral|Hold|Perform/.test(p[2])?C.yellow:C.red)}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{grid,min:0,max:260,title:{display:true,text:'$ per share (current price $152.42 marked)'}},y:{grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` $${c.raw} · ${PT[c.dataIndex][2]} · ${fmtPct((c.raw/152.42-1)*100)} vs price`}}}},
+    plugins:[{id:'pxline',afterDraw:ch=>{const x=ch.scales.x.getPixelForValue(152.42);const ctx=ch.ctx;ctx.save();ctx.strokeStyle='#fff';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,ch.chartArea.top);ctx.lineTo(x,ch.chartArea.bottom);ctx.stroke();ctx.fillStyle='#fff';ctx.font='11px Inter';ctx.fillText('$152.42',x+4,ch.chartArea.top+12);ctx.restore();}}]});
+  const eps=[5.35,6.07,6.68,7.05,7.30,7.70,8.20],mult=[12,17,21,23.5,25,28,30,37.5];
+  let h='<table class="tbl"><tr><th style="text-align:left">2027 EPS \\ P/E</th>'+mult.map(m=>`<th>${m}x</th>`).join('')+'</tr>';
+  eps.forEach(e=>{h+=`<tr><td class="num">$${e.toFixed(2)}</td>`+mult.map(m=>{const p=e*m;const d=p/152.42-1;const col=Math.abs(d)<0.05?'background:rgba(255,255,255,.08);color:#fff;font-weight:700':d>0?'color:#5fd49f':'color:#f09a9a';return `<td class="num" style="${col}">$${p.toFixed(0)}</td>`;}).join('')+'</tr>';});
+  h+='</table>';document.getElementById('valMatrix').innerHTML=h;
+  mk('chPE',{type:'bar',data:{labels:['10-yr avg','5-yr avg','3-yr fwd avg (CFRA)','1-yr peak avg','2024 low','2024 high','2025 low','2025 high','Now (NTM)'],datasets:[{label:'P/E',data:[20,21,25.1,27,14.4,48,16.6,33,21.8],backgroundColor:[C.blue,C.blue,C.blue,C.blue,C.red,C.aqua,C.red,C.aqua,C.violet]}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid,title:{display:true,text:'x'}},x:{grid:{display:false}}},plugins:{legend:{display:false}}}});
+})();
+
+animateCounters();
+</script>
+</body>
+</html>
